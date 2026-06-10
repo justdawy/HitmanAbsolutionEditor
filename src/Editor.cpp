@@ -60,6 +60,8 @@ Editor& Editor::GetInstance()
 bool Editor::Setup()
 {
     wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, "Hitman Absolution Editor", nullptr };
+    wc.hIcon = LoadIconA(wc.hInstance, "IDI_ICON1");
+    wc.hIconSm = LoadIconA(wc.hInstance, "IDI_ICON1");
 
     RegisterClassExA(&wc);
 
