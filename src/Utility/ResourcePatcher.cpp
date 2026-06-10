@@ -83,35 +83,64 @@ bool ResourcePatcher::RebuildResourceLibrary(const std::string& resourceLibraryP
         return false;
     }
 
-    std::vector<char> preData(offsetInResourceLibrary);
-    inFile.read(preData.data(), offsetInResourceLibrary);
-
-    inFile.seekg(offsetInResourceLibrary + originalSize, std::ios::beg);
-    
-    inFile.seekg(0, std::ios::end);
-    size_t totalSize = inFile.tellg();
-    size_t remainingSize = totalSize - (offsetInResourceLibrary + originalSize);
-    
-    inFile.seekg(offsetInResourceLibrary + originalSize, std::ios::beg);
-    std::vector<char> postData(remainingSize);
-    inFile.read(postData.data(), remainingSize);
-    inFile.close();
-
-    std::ofstream outFile(resourceLibraryPath, std::ios::binary | std::ios::trunc);
+    std::ofstream outFile(resourceLibraryPath + ".tmp", std::ios::binary | std::ios::trunc);
     if (!outFile.is_open())
     {
-        Logger::GetInstance().Log(Logger::Level::Error, "Failed to open resource library for writing.");
+        Logger::GetInstance().Log(Logger::Level::Error, "Failed to open temporary resource library for writing.");
         return false;
     }
 
-    outFile.write(preData.data(), preData.size());
+    constexpr size_t bufferSize = 16 * 1024 * 1024; // 16 MB chunks
+    std::vector<char> buffer(bufferSize);
+
+    // Copy pre-data
+    size_t preRemaining = offsetInResourceLibrary;
+    while (preRemaining > 0)
+    {
+        size_t toRead = (std::min)(preRemaining, bufferSize);
+        inFile.read(buffer.data(), toRead);
+        outFile.write(buffer.data(), toRead);
+        preRemaining -= toRead;
+    }
+
+    // Write new data
     outFile.write(static_cast<const char*>(newData), newDataSize);
-    outFile.write(postData.data(), postData.size());
+
+    // Skip original size in the input file
+    inFile.seekg(offsetInResourceLibrary + originalSize, std::ios::beg);
+
+    // Copy post-data
+    inFile.seekg(0, std::ios::end);
+    size_t totalSize = inFile.tellg();
+    size_t postRemaining = totalSize - (offsetInResourceLibrary + originalSize);
+    
+    inFile.seekg(offsetInResourceLibrary + originalSize, std::ios::beg);
+
+    while (postRemaining > 0)
+    {
+        size_t toRead = (std::min)(postRemaining, bufferSize);
+        inFile.read(buffer.data(), toRead);
+        outFile.write(buffer.data(), toRead);
+        postRemaining -= toRead;
+    }
+
+    inFile.close();
     outFile.close();
+
+    // Replace the original resource library with the temporary one
+    try
+    {
+        std::filesystem::rename(resourceLibraryPath + ".tmp", resourceLibraryPath);
+    }
+    catch (const std::exception& e)
+    {
+        Logger::GetInstance().Log(Logger::Level::Error, "Failed to replace resource library: " + std::string(e.what()));
+        return false;
+    }
 
     // 1.5. Update the resource library's own header (m_nDataSize at offset 12)
     {
-        size_t newTotalFileSize = preData.size() + newDataSize + postData.size();
+        size_t newTotalFileSize = offsetInResourceLibrary + newDataSize + postRemaining;
         unsigned int newTotalDataSize = static_cast<unsigned int>(newTotalFileSize - 0x18);
 
         std::fstream resLibHeader(resourceLibraryPath, std::ios::in | std::ios::out | std::ios::binary);

@@ -19,6 +19,7 @@
 #include "UI/Panels/BoneHierarchyPanel.h"
 #include "Registry/ResourceInfoRegistry.h"
 #include "Registry/ResourceIDRegistry.h"
+#include "Utility/TaskRunner.h"
 #include "UI/Documents/TemplateEntityDocument.h"
 #include "UI/Documents/TextureDocument.h"
 #include "UI/Documents/CppEntityDocument.h"
@@ -949,8 +950,9 @@ void ResourceBrowserPanel::RenderBatchExportPopup()
                     }
                 }
 
-                std::thread exportThread(&ResourceBrowserPanel::ExecuteBatchExport, this, batchExportFolderNode, batchExportFolderPath, batchExportOutputFolder, activeLanguages);
-                exportThread.detach();
+                TaskRunner::RunAsync([this, batchExportFolderNode = this->batchExportFolderNode, batchExportFolderPath = this->batchExportFolderPath, batchExportOutputFolder = this->batchExportOutputFolder, activeLanguages]() {
+                    ExecuteBatchExport(batchExportFolderNode, batchExportFolderPath, batchExportOutputFolder, activeLanguages);
+                });
             }
         }
 
@@ -1127,8 +1129,9 @@ void ResourceBrowserPanel::RenderBatchImportPopup()
 
             if (!batchImportInputFolder.empty())
             {
-                std::thread importThread(&ResourceBrowserPanel::ExecuteBatchImport, this, batchImportInputFolder);
-                importThread.detach();
+                TaskRunner::RunAsync([this, batchImportInputFolder = this->batchImportInputFolder]() {
+                    ExecuteBatchImport(batchImportInputFolder);
+                });
             }
         }
 
@@ -1184,7 +1187,7 @@ void ResourceBrowserPanel::ExecuteBatchImport(std::string inputPath)
                     std::string hexStr = fileName.substr(lastUnderscore + 1, firstDot - lastUnderscore - 1);
                     if (hexStr.starts_with("0x") || hexStr.starts_with("0X"))
                     {
-                        try
+                        try 
                         {
                             unsigned long long runtimeResourceID = std::stoull(hexStr, nullptr, 16);
                             std::string resourceID = ResourceIDRegistry::GetInstance().GetResourceID(runtimeResourceID);
@@ -1195,48 +1198,28 @@ void ResourceBrowserPanel::ExecuteBatchImport(std::string inputPath)
                                 const ResourceInfoRegistry::ResourceInfo& resInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(hash);
                                 std::shared_ptr<Resource> importResource = ResourceUtility::CreateResource(resInfo.type);
                                 std::string resName = ResourceUtility::GetResourceName(resInfo.resourceID);
-
+                                
                                 importResource->SetHash(resInfo.hash);
                                 importResource->SetResourceID(resInfo.resourceID);
                                 importResource->SetHeaderLibraries(&resInfo.headerLibraries);
                                 importResource->SetName(resName);
 
-                                if (resInfo.headerLibraries.size() > 0)
+                                // Load the resource header to find offset and sizes
+                                importResource->LoadResource(0, resInfo.headerLibraries[0].chunkIndex, resInfo.headerLibraries[0].indexInLibrary, true, false, true);
+                                
+                                if (resInfo.type == "TELI")
                                 {
-                                    importResource->LoadResource(0, resInfo.headerLibraries[0].chunkIndex, resInfo.headerLibraries[0].indexInLibrary, true, false, true);
-                                }
-                                else
-                                {
-                                    importResource->LoadResource(0, -1, -1, true, false, true);
-                                }
-
-                                if (importResource->GetResourceData())
-                                {
+                                    std::shared_ptr<TextList> textList = std::static_pointer_cast<TextList>(importResource);
+                                    
                                     bool importSuccess = false;
-
-                                    if (resInfo.type == "TELI")
+                                    try 
                                     {
-                                        std::shared_ptr<TextList> textList = std::static_pointer_cast<TextList>(importResource);
-                                        textList->Deserialize();
                                         textList->ImportFromJson(filePath);
-                                        textList->SerializeToBuffer();
                                         importSuccess = true;
                                     }
-                                    else if (resInfo.type == "LOCR")
+                                    catch (const std::exception& e)
                                     {
-                                        std::shared_ptr<Localization> localization = std::static_pointer_cast<Localization>(importResource);
-                                        localization->Deserialize();
-                                        localization->ImportFromJson(filePath);
-                                        localization->SerializeToBuffer();
-                                        importSuccess = true;
-                                    }
-                                    else if (resInfo.type == "LOCM")
-                                    {
-                                        std::shared_ptr<MultiLanguage> multiLanguage = std::static_pointer_cast<MultiLanguage>(importResource);
-                                        multiLanguage->Deserialize();
-                                        multiLanguage->ImportFromJson(filePath);
-                                        multiLanguage->SerializeToBuffer();
-                                        importSuccess = true;
+                                        Logger::GetInstance().Log(Logger::Level::Error, "Failed to parse JSON for file: {}. Error: {}", fileName, e.what());
                                     }
 
                                     if (importSuccess)
@@ -1254,31 +1237,108 @@ void ResourceBrowserPanel::ExecuteBatchImport(std::string inputPath)
                                         }
                                         else
                                         {
-                                            Logger::GetInstance().Log(Logger::Level::Error, std::format("Failed to patch resource archive for: {}", fileName));
+                                            Logger::GetInstance().Log(Logger::Level::Error, "Failed to patch resource for file: {}", fileName);
                                             failedCount++;
                                         }
                                     }
                                     else
                                     {
-                                        Logger::GetInstance().Log(Logger::Level::Warning, std::format("Unsupported resource type for import: {}", fileName));
                                         failedCount++;
                                     }
                                 }
-                                else
+                                else if (resInfo.type == "LOCR")
                                 {
-                                    Logger::GetInstance().Log(Logger::Level::Warning, std::format("Skipped importing {} because it has no data.", fileName));
+                                    std::shared_ptr<Localization> localization = std::static_pointer_cast<Localization>(importResource);
+                                    
+                                    bool importSuccess = false;
+                                    try 
+                                    {
+                                        localization->ImportFromJson(filePath);
+                                        importSuccess = true;
+                                    }
+                                    catch (const std::exception& e)
+                                    {
+                                        Logger::GetInstance().Log(Logger::Level::Error, "Failed to parse JSON for file: {}. Error: {}", fileName, e.what());
+                                    }
+                                    
+                                    if (importSuccess)
+                                    {
+                                        std::string resourceLibPath = importResource->GetResourceLibraryFilePath();
+                                        std::string headerLibPath = importResource->GetHeaderLibraryFilePath();
+                                        unsigned int offsetInResLib = importResource->GetOffsetInResourceLibrary();
+                                        unsigned int offsetInHeaderLib = importResource->GetOffsetInHeaderLibrary();
+                                        const void* newData = importResource->GetResourceData();
+                                        unsigned int newDataSize = importResource->GetResourceDataSize();
+
+                                        if (ResourcePatcher::PatchResourceLibrary(resourceLibPath, headerLibPath, offsetInResLib, offsetInHeaderLib, newData, newDataSize))
+                                        {
+                                            importedCount++;
+                                        }
+                                        else
+                                        {
+                                            Logger::GetInstance().Log(Logger::Level::Error, "Failed to patch resource for file: {}", fileName);
+                                            failedCount++;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        failedCount++;
+                                    }
+                                }
+                                else if (resInfo.type == "LOCM")
+                                {
+                                    std::shared_ptr<MultiLanguage> multiLanguage = std::static_pointer_cast<MultiLanguage>(importResource);
+                                    
+                                    bool importSuccess = false;
+                                    try 
+                                    {
+                                        multiLanguage->ImportFromJson(filePath);
+                                        importSuccess = true;
+                                    }
+                                    catch (const std::exception& e)
+                                    {
+                                        Logger::GetInstance().Log(Logger::Level::Error, "Failed to parse JSON for file: {}. Error: {}", fileName, e.what());
+                                    }
+                                    
+                                    if (importSuccess)
+                                    {
+                                        std::string resourceLibPath = importResource->GetResourceLibraryFilePath();
+                                        std::string headerLibPath = importResource->GetHeaderLibraryFilePath();
+                                        unsigned int offsetInResLib = importResource->GetOffsetInResourceLibrary();
+                                        unsigned int offsetInHeaderLib = importResource->GetOffsetInHeaderLibrary();
+                                        const void* newData = importResource->GetResourceData();
+                                        unsigned int newDataSize = importResource->GetResourceDataSize();
+
+                                        if (ResourcePatcher::PatchResourceLibrary(resourceLibPath, headerLibPath, offsetInResLib, offsetInHeaderLib, newData, newDataSize))
+                                        {
+                                            importedCount++;
+                                        }
+                                        else
+                                        {
+                                            Logger::GetInstance().Log(Logger::Level::Error, "Failed to patch resource for file: {}", fileName);
+                                            failedCount++;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        failedCount++;
+                                    }
+                                }
+                                else 
+                                {
+                                    Logger::GetInstance().Log(Logger::Level::Warning, "Unsupported resource type for batch import: {}", fileName);
                                     failedCount++;
                                 }
                             }
                             else
                             {
-                                Logger::GetInstance().Log(Logger::Level::Warning, std::format("Resource hash not found in registry for file: {}", fileName));
+                                Logger::GetInstance().Log(Logger::Level::Warning, "Resource ID not found in registry for file: {}", fileName);
                                 failedCount++;
                             }
                         }
                         catch (const std::exception& e)
                         {
-                            Logger::GetInstance().Log(Logger::Level::Error, std::format("Exception importing {}: {}", fileName, e.what()));
+                            Logger::GetInstance().Log(Logger::Level::Error, "Failed to process file {}: {}", fileName, e.what());
                             failedCount++;
                         }
                     }
