@@ -31,6 +31,11 @@ public:
 	void LoadResourceTypes();
 	void LoadResource(std::shared_ptr<Resource> resource, const ResourceNode& resourceNode, const bool loadBackReferences = true);
 	void CreateResourceDocument(const ResourceNode& resourceNode);
+	void RenderFolderContextMenu(ResourceNode& folderNode, const std::string& parentPath);
+	void RenderBatchExportPopup();
+	void ExecuteBatchExport(ResourceNode folderNode, std::string basePath, std::string outputPath, std::vector<std::string> languages);
+	void RenderBatchImportPopup();
+	void ExecuteBatchImport(std::string inputPath);
 
 private:
 	ResourceNode assemblyNode;
@@ -39,7 +44,17 @@ private:
 	char resourceName[256] = { "" };
 	bool isInputTextActive;
 	unsigned int nodeIndex;
-	unsigned int selectedNodeIndex;
+	int selectedNodeIndex;
+
 	bool showResourceExportPopup;
 	std::shared_ptr<Resource> resource;
+
+	bool showBatchExportPopup;
+	ResourceNode batchExportFolderNode;
+	std::string batchExportFolderPath;
+	std::string batchExportOutputFolder;
+	std::map<std::string, bool> batchExportLanguages;
+
+	bool showBatchImportPopup;
+	std::string batchImportInputFolder;
 };

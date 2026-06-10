@@ -1,6 +1,7 @@
 #include <format>
 #include <fstream>
 #include <thread>
+#include <filesystem>
 
 #include <IconsMaterialDesignIcons.h>
 
@@ -17,6 +18,7 @@
 #include "UI/Panels/ComponentPropertiesPanel.h"
 #include "UI/Panels/BoneHierarchyPanel.h"
 #include "Registry/ResourceInfoRegistry.h"
+#include "Registry/ResourceIDRegistry.h"
 #include "UI/Documents/TemplateEntityDocument.h"
 #include "UI/Documents/TextureDocument.h"
 #include "UI/Documents/CppEntityDocument.h"
@@ -58,6 +60,8 @@ ResourceBrowserPanel::ResourceBrowserPanel(const char* name, const char* icon) :
     isInputTextActive = false;
     selectedNodeIndex = -1;
     showResourceExportPopup = false;
+    showBatchExportPopup = false;
+    showBatchImportPopup = false;
 
     LoadResourceTypes();
     AddRootResourceNodes();
@@ -166,6 +170,9 @@ void ResourceBrowserPanel::Render()
         RenderTree(modulesNode, modulesNode.name);
 
         UI::ResourceExportPopup(showResourceExportPopup, resource);
+
+        RenderBatchExportPopup();
+        RenderBatchImportPopup();
     }
 
     ImGui::PopFont();
@@ -201,6 +208,13 @@ void ResourceBrowserPanel::RenderTree(ResourceNode& parentNode, std::string pare
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
         {
             selectedNodeIndex = parentNode.index;
+        }
+
+        if (ImGui::BeginPopupContextItem())
+        {
+            RenderFolderContextMenu(parentNode, parentPath);
+
+            ImGui::EndPopup();
         }
 
         if (isNodeOpen)
@@ -819,4 +833,459 @@ void ResourceBrowserPanel::CreateResourceDocument(const ResourceNode& resourceNo
     std::thread thread(&ResourceBrowserPanel::LoadResource, this, resource, resourceNode, true);
 
     thread.detach();
+}
+
+void ResourceBrowserPanel::RenderFolderContextMenu(ResourceNode& folderNode, const std::string& parentPath)
+{
+    static std::string batchExportLabel = std::format("{} Batch Export Localizations", ICON_MDI_EXPORT);
+
+    if (ImGui::MenuItem(batchExportLabel.c_str()))
+    {
+        showBatchExportPopup = true;
+        batchExportFolderNode = folderNode;
+        batchExportFolderPath = parentPath;
+        if (batchExportFolderPath.ends_with("/"))
+        {
+            batchExportFolderPath = batchExportFolderPath.substr(0, batchExportFolderPath.length() - 1);
+        }
+
+        if (batchExportLanguages.empty())
+        {
+            batchExportLanguages["_en"] = true;
+            batchExportLanguages["_de"] = false;
+            batchExportLanguages["_fr"] = false;
+            batchExportLanguages["_it"] = false;
+            batchExportLanguages["_es"] = false;
+            batchExportLanguages["_pl"] = true;
+            batchExportLanguages["_ru"] = false;
+            batchExportLanguages["_tr"] = false;
+            batchExportLanguages["_ja"] = false;
+        }
+    }
+
+    static std::string batchImportLabel = std::format("{} Batch Import Localizations", ICON_MDI_IMPORT);
+
+    if (ImGui::MenuItem(batchImportLabel.c_str()))
+    {
+        showBatchImportPopup = true;
+        batchImportInputFolder = "";
+    }
+}
+
+void ResourceBrowserPanel::RenderBatchExportPopup()
+{
+    if (showBatchExportPopup)
+    {
+        ImGui::OpenPopup("Batch Export Localizations");
+    }
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 modalSize = ImVec2(500, 400);
+    ImVec2 centerPosition = ImVec2(
+        viewport->GetCenter().x - modalSize.x / 2,
+        viewport->GetCenter().y - modalSize.y / 2
+    );
+
+    ImGui::SetNextWindowSize(modalSize);
+    ImGui::SetNextWindowPos(centerPosition, ImGuiCond_Appearing);
+
+    if (ImGui::BeginPopupModal("Batch Export Localizations", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::PushFont(Editor::GetInstance().GetImGuiRenderer()->GetMiddleFont());
+
+        ImGui::TextUnformatted("Output Folder Path");
+        const float windowWidth = ImGui::GetContentRegionAvail().x;
+        const float buttonWidth = UI::GetIconButtonSize(ICON_MDI_FOLDER, "").x;
+        const float inputTextWidth = windowWidth - buttonWidth - ImGui::GetStyle().ItemSpacing.x;
+
+        ImGui::PushItemWidth(inputTextWidth);
+        ImGui::InputText("##OutputFolderPath", &batchExportOutputFolder);
+        ImGui::PopItemWidth();
+        ImGui::SameLine();
+
+        if (ImGui::Button(ICON_MDI_FOLDER))
+        {
+            batchExportOutputFolder = FileDialog::OpenFolder();
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::Text("Select languages to export:");
+        ImGui::Spacing();
+
+        if (ImGui::Button("Select All"))
+        {
+            for (auto& pair : batchExportLanguages) pair.second = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Deselect All"))
+        {
+            for (auto& pair : batchExportLanguages) pair.second = false;
+        }
+        ImGui::Spacing();
+
+        for (auto& pair : batchExportLanguages)
+        {
+            ImGui::Checkbox(pair.first.c_str(), &pair.second);
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (UI::IconButton("  " ICON_MDI_EXPORT, " Export "))
+        {
+            showBatchExportPopup = false;
+            ImGui::CloseCurrentPopup();
+
+            if (!batchExportOutputFolder.empty())
+            {
+                std::vector<std::string> activeLanguages;
+                for (auto& pair : batchExportLanguages)
+                {
+                    if (pair.second)
+                    {
+                        activeLanguages.push_back(pair.first);
+                    }
+                }
+
+                std::thread exportThread(&ResourceBrowserPanel::ExecuteBatchExport, this, batchExportFolderNode, batchExportFolderPath, batchExportOutputFolder, activeLanguages);
+                exportThread.detach();
+            }
+        }
+
+        ImGui::SameLine();
+
+        if (UI::IconButton("  " ICON_MDI_CLOSE, " Cancel "))
+        {
+            showBatchExportPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::PopFont();
+        ImGui::EndPopup();
+    }
+}
+
+void ResourceBrowserPanel::ExecuteBatchExport(ResourceNode folderNode, std::string basePath, std::string outputPath, std::vector<std::string> languages)
+{
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Starting batch export of localization files from '{}'", basePath));
+
+    std::vector<std::pair<ResourceNode, std::string>> nodesToProcess;
+    std::vector<std::pair<ResourceNode, std::string>> allLeafNodes;
+    nodesToProcess.push_back({ folderNode, "" });
+
+    while (!nodesToProcess.empty())
+    {
+        auto [currentNode, currentRelPath] = nodesToProcess.back();
+        nodesToProcess.pop_back();
+
+        if (currentNode.children.size() == 1 && currentNode.children[0].name.empty())
+        {
+            std::string fullPath = basePath;
+            if (!currentRelPath.empty()) fullPath += "/" + currentRelPath;
+            AddChildren(currentNode, fullPath);
+        }
+
+        for (ResourceNode& child : currentNode.children)
+        {
+            std::string childRelPath = currentRelPath.empty() ? child.name : currentRelPath + "/" + child.name;
+
+            if (child.children.size() > 0) 
+            {
+                nodesToProcess.push_back({ child, childRelPath });
+            }
+            else
+            {
+                allLeafNodes.push_back({ child, currentRelPath });
+            }
+        }
+    }
+
+    int exportedCount = 0;
+
+    for (const auto& [leafNode, relPath] : allLeafNodes)
+    {
+        const ResourceInfoRegistry::ResourceInfo& resInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(leafNode.hash);
+        
+        if (resInfo.type == "TELI" || resInfo.type == "LOCR")
+        {
+            bool matchesLanguage = false;
+            std::string leafNameLower = StringUtility::ToLowerCase(leafNode.name);
+
+            if (languages.empty()) 
+            {
+                matchesLanguage = true; 
+            }
+            else
+            {
+                for (const std::string& lang : languages)
+                {
+                    if (leafNameLower.find(lang + ".") != std::string::npos)
+                    {
+                        matchesLanguage = true;
+                        break;
+                    }
+                }
+            }
+
+            if (matchesLanguage)
+            {
+                try
+                {
+                    std::shared_ptr<Resource> resourceToExport = ResourceUtility::CreateResource(resInfo.type);
+                    std::string resourceName = ResourceUtility::GetResourceName(resInfo.resourceID);
+
+                    resourceToExport->SetHash(resInfo.hash);
+                    resourceToExport->SetResourceID(resInfo.resourceID);
+                    resourceToExport->SetHeaderLibraries(&resInfo.headerLibraries);
+                    resourceToExport->SetName(resourceName);
+
+                    ResourceUtility::LoadResource(resourceToExport);
+
+                    if (resourceToExport->GetResourceData())
+                    {
+                        resourceToExport->Deserialize();
+
+                        std::string fullOutDir = outputPath;
+                        if (!relPath.empty())
+                        {
+                            std::string fixedRelPath = relPath;
+                            std::replace(fixedRelPath.begin(), fixedRelPath.end(), '/', '\\');
+                            fullOutDir += "\\" + fixedRelPath;
+                        }
+
+                        std::filesystem::create_directories(fullOutDir);
+
+                        std::string outFilePath = fullOutDir + "\\" + ResourceUtility::GenerateFileName(resourceToExport) + ".TEXTLIST.JSON";
+                        resourceToExport->Export(outFilePath, "Json File (.TEXTLIST.JSON)");
+                        
+                        exportedCount++;
+                    }
+                    else
+                    {
+                        Logger::GetInstance().Log(Logger::Level::Warning, std::format("Skipped exporting {} because it has no data.", resourceName));
+                    }
+                }
+                catch (const std::exception& e)
+                {
+                    Logger::GetInstance().Log(Logger::Level::Error, std::format("Exception during batch export of {}: {}", leafNode.name, e.what()));
+                }
+            }
+        }
+    }
+
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Batch export complete. Exported {} files.", exportedCount));
+}
+
+void ResourceBrowserPanel::RenderBatchImportPopup()
+{
+    if (showBatchImportPopup)
+    {
+        ImGui::OpenPopup("Batch Import Localizations");
+    }
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImVec2 modalSize = ImVec2(500, 200);
+    ImVec2 centerPosition = ImVec2(
+        viewport->GetCenter().x - modalSize.x / 2,
+        viewport->GetCenter().y - modalSize.y / 2
+    );
+
+    ImGui::SetNextWindowSize(modalSize);
+    ImGui::SetNextWindowPos(centerPosition, ImGuiCond_Appearing);
+
+    if (ImGui::BeginPopupModal("Batch Import Localizations", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::PushFont(Editor::GetInstance().GetImGuiRenderer()->GetMiddleFont());
+
+        ImGui::TextUnformatted("Input Folder Path (JSON Files)");
+        const float windowWidth = ImGui::GetContentRegionAvail().x;
+        const float buttonWidth = UI::GetIconButtonSize(ICON_MDI_FOLDER, "").x;
+        const float inputTextWidth = windowWidth - buttonWidth - ImGui::GetStyle().ItemSpacing.x;
+
+        ImGui::PushItemWidth(inputTextWidth);
+        ImGui::InputText("##InputFolderPath", &batchImportInputFolder);
+        ImGui::PopItemWidth();
+        ImGui::SameLine();
+
+        if (ImGui::Button(ICON_MDI_FOLDER))
+        {
+            batchImportInputFolder = FileDialog::OpenFolder();
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (UI::IconButton("  " ICON_MDI_IMPORT, " Import "))
+        {
+            showBatchImportPopup = false;
+            ImGui::CloseCurrentPopup();
+
+            if (!batchImportInputFolder.empty())
+            {
+                std::thread importThread(&ResourceBrowserPanel::ExecuteBatchImport, this, batchImportInputFolder);
+                importThread.detach();
+            }
+        }
+
+        ImGui::SameLine();
+
+        if (UI::IconButton("  " ICON_MDI_CLOSE, " Cancel "))
+        {
+            showBatchImportPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::PopFont();
+        ImGui::EndPopup();
+    }
+}
+
+void ResourceBrowserPanel::ExecuteBatchImport(std::string inputPath)
+{
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Starting batch import from '{}'", inputPath));
+
+    if (!std::filesystem::exists(inputPath) || !std::filesystem::is_directory(inputPath))
+    {
+        Logger::GetInstance().Log(Logger::Level::Error, "Invalid input folder for batch import.");
+        return;
+    }
+
+    int importedCount = 0;
+    int failedCount = 0;
+
+    const auto& resourcesInfo = ResourceInfoRegistry::GetInstance().GetResourcesInfo();
+    std::unordered_map<std::string, unsigned long long> resourceIDToHash;
+    for (const auto& [hash, info] : resourcesInfo)
+    {
+        resourceIDToHash[info.resourceID] = hash;
+    }
+
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(inputPath))
+    {
+        if (entry.is_regular_file())
+        {
+            std::string filePath = entry.path().string();
+            std::string fileName = entry.path().filename().string();
+            std::string fileNameLower = StringUtility::ToLowerCase(fileName);
+
+            if (fileNameLower.ends_with(".json"))
+            {
+                // Format: resourceName_0xHASH.TEXTLIST.JSON
+                size_t lastUnderscore = fileName.find_last_of('_');
+                size_t firstDot = fileName.find('.', lastUnderscore);
+                
+                if (lastUnderscore != std::string::npos && firstDot != std::string::npos && firstDot > lastUnderscore)
+                {
+                    std::string hexStr = fileName.substr(lastUnderscore + 1, firstDot - lastUnderscore - 1);
+                    if (hexStr.starts_with("0x") || hexStr.starts_with("0X"))
+                    {
+                        try
+                        {
+                            unsigned long long runtimeResourceID = std::stoull(hexStr, nullptr, 16);
+                            std::string resourceID = ResourceIDRegistry::GetInstance().GetResourceID(runtimeResourceID);
+
+                            if (!resourceID.empty() && resourceIDToHash.contains(resourceID))
+                            {
+                                unsigned long long hash = resourceIDToHash[resourceID];
+                                const ResourceInfoRegistry::ResourceInfo& resInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(hash);
+                                std::shared_ptr<Resource> importResource = ResourceUtility::CreateResource(resInfo.type);
+                                std::string resName = ResourceUtility::GetResourceName(resInfo.resourceID);
+
+                                importResource->SetHash(resInfo.hash);
+                                importResource->SetResourceID(resInfo.resourceID);
+                                importResource->SetHeaderLibraries(&resInfo.headerLibraries);
+                                importResource->SetName(resName);
+
+                                if (resInfo.headerLibraries.size() > 0)
+                                {
+                                    importResource->LoadResource(0, resInfo.headerLibraries[0].chunkIndex, resInfo.headerLibraries[0].indexInLibrary, true, false, true);
+                                }
+                                else
+                                {
+                                    importResource->LoadResource(0, -1, -1, true, false, true);
+                                }
+
+                                if (importResource->GetResourceData())
+                                {
+                                    bool importSuccess = false;
+
+                                    if (resInfo.type == "TELI")
+                                    {
+                                        std::shared_ptr<TextList> textList = std::static_pointer_cast<TextList>(importResource);
+                                        textList->Deserialize();
+                                        textList->ImportFromJson(filePath);
+                                        textList->SerializeToBuffer();
+                                        importSuccess = true;
+                                    }
+                                    else if (resInfo.type == "LOCR")
+                                    {
+                                        std::shared_ptr<Localization> localization = std::static_pointer_cast<Localization>(importResource);
+                                        localization->Deserialize();
+                                        localization->ImportFromJson(filePath);
+                                        localization->SerializeToBuffer();
+                                        importSuccess = true;
+                                    }
+                                    else if (resInfo.type == "LOCM")
+                                    {
+                                        std::shared_ptr<MultiLanguage> multiLanguage = std::static_pointer_cast<MultiLanguage>(importResource);
+                                        multiLanguage->Deserialize();
+                                        multiLanguage->ImportFromJson(filePath);
+                                        multiLanguage->SerializeToBuffer();
+                                        importSuccess = true;
+                                    }
+
+                                    if (importSuccess)
+                                    {
+                                        std::string resourceLibPath = importResource->GetResourceLibraryFilePath();
+                                        std::string headerLibPath = importResource->GetHeaderLibraryFilePath();
+                                        unsigned int offsetInResLib = importResource->GetOffsetInResourceLibrary();
+                                        unsigned int offsetInHeaderLib = importResource->GetOffsetInHeaderLibrary();
+                                        const void* newData = importResource->GetResourceData();
+                                        unsigned int newDataSize = importResource->GetResourceDataSize();
+
+                                        if (ResourcePatcher::PatchResourceLibrary(resourceLibPath, headerLibPath, offsetInResLib, offsetInHeaderLib, newData, newDataSize))
+                                        {
+                                            importedCount++;
+                                        }
+                                        else
+                                        {
+                                            Logger::GetInstance().Log(Logger::Level::Error, std::format("Failed to patch resource archive for: {}", fileName));
+                                            failedCount++;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Logger::GetInstance().Log(Logger::Level::Warning, std::format("Unsupported resource type for import: {}", fileName));
+                                        failedCount++;
+                                    }
+                                }
+                                else
+                                {
+                                    Logger::GetInstance().Log(Logger::Level::Warning, std::format("Skipped importing {} because it has no data.", fileName));
+                                    failedCount++;
+                                }
+                            }
+                            else
+                            {
+                                Logger::GetInstance().Log(Logger::Level::Warning, std::format("Resource hash not found in registry for file: {}", fileName));
+                                failedCount++;
+                            }
+                        }
+                        catch (const std::exception& e)
+                        {
+                            Logger::GetInstance().Log(Logger::Level::Error, std::format("Exception importing {}: {}", fileName, e.what()));
+                            failedCount++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Batch import complete. Successfully imported {}, Failed {}", importedCount, failedCount));
 }

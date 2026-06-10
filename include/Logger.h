@@ -46,7 +46,7 @@ public:
 	static Logger& GetInstance();
 	static const char* LevelToString(const Level level);
 	static const char* TypeToString(const Type type);
-	std::vector<Message>& GetMessages();
+	std::vector<Message> GetMessages();
 	void ClearMessage(const unsigned int index);
 	void ClearAllMessages();
 	static std::string GetCurrentTime();

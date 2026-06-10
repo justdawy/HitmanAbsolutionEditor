@@ -47,18 +47,21 @@ const char* Logger::TypeToString(const Type type)
     }
 }
 
-std::vector<Logger::Message>& Logger::GetMessages()
+std::vector<Logger::Message> Logger::GetMessages()
 {
+    ScopedSharedGuard scopedSharedGuard = ScopedSharedGuard(&srwLock);
     return messages;
 }
 
 void Logger::ClearMessage(const unsigned int index)
 {
+    ScopedExclusiveGuard scopedSharedGuard = ScopedExclusiveGuard(&srwLock);
     messages.erase(messages.begin() + index);
 }
 
 void Logger::ClearAllMessages()
 {
+    ScopedExclusiveGuard scopedSharedGuard = ScopedExclusiveGuard(&srwLock);
     messages.clear();
 }
 
