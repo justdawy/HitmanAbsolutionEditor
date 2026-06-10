@@ -10,6 +10,7 @@
 #include "Utility/ResourceUtility.h"
 #include "Utility/UI.h"
 #include "Utility/FileDialog.h"
+#include "Utility/ResourcePatcher.h"
 #include "UI/Panels/HexViewerPanel.h"
 #include "UI/Panels/ResourceInfoPanel.h"
 #include "UI/Panels/SceneHierarchyPanel2.h"
@@ -47,6 +48,9 @@
 #include "UI/Documents/ClothDocument.h"
 #include "UI/Documents/BoneRigDocument.h"
 #include "UI/Documents/PhysicsDocument.h"
+#include "Resources/TextList.h"
+#include "Resources/Localization.h"
+#include "Resources/MultiLanguage.h"
 #include "Editor.h"
 
 ResourceBrowserPanel::ResourceBrowserPanel(const char* name, const char* icon) : BasePanel(name, icon)
@@ -269,6 +273,119 @@ void ResourceBrowserPanel::RenderContextMenu(ResourceNode& resourceNode)
         std::thread thread(&ResourceBrowserPanel::LoadResource, this, resource, resourceNode, true);
 
         thread.detach();
+    }
+
+    const ResourceInfoRegistry::ResourceInfo& resInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(resourceNode.hash);
+    if (resInfo.type == "TELI" || resInfo.type == "LOCR" || resInfo.type == "LOCM")
+    {
+        static std::string importResourceLabel = std::format("{} Import JSON (Replace Localization)", ICON_MDI_IMPORT);
+
+        if (ImGui::MenuItem(importResourceLabel.c_str()))
+        {
+            std::string jsonPath = FileDialog::OpenFile("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0");
+            if (!jsonPath.empty())
+            {
+                std::shared_ptr<Resource> importResource = ResourceUtility::CreateResource(resInfo.type);
+                std::string resName = ResourceUtility::GetResourceName(resInfo.resourceID);
+
+                importResource->SetHash(resInfo.hash);
+                importResource->SetResourceID(resInfo.resourceID);
+                importResource->SetHeaderLibraries(&resInfo.headerLibraries);
+                importResource->SetName(resName);
+
+                ResourceUtility::LoadResource(importResource);
+
+                if (resInfo.type == "TELI")
+                {
+                    std::shared_ptr<TextList> textList = std::static_pointer_cast<TextList>(importResource);
+                    textList->Deserialize();
+                    textList->ImportFromJson(jsonPath);
+                }
+                else if (resInfo.type == "LOCR")
+                {
+                    std::shared_ptr<Localization> localization = std::static_pointer_cast<Localization>(importResource);
+                    localization->Deserialize();
+                    localization->ImportFromJson(jsonPath);
+                }
+                else if (resInfo.type == "LOCM")
+                {
+                    std::shared_ptr<MultiLanguage> multiLanguage = std::static_pointer_cast<MultiLanguage>(importResource);
+                    multiLanguage->Deserialize();
+                    multiLanguage->ImportFromJson(jsonPath);
+                }
+
+                std::string savePath = FileDialog::SaveFile("RAW Files (*.raw)\0*.raw\0All Files (*.*)\0*.*\0");
+                if (!savePath.empty())
+                {
+                    importResource->ExportRawData(savePath);
+                }
+            }
+        }
+
+        static std::string patchResourceLabel = std::format("{} Patch Resource Library (Write Back)", ICON_MDI_FILE_REPLACE);
+
+        if (ImGui::MenuItem(patchResourceLabel.c_str()))
+        {
+            std::string jsonPath = FileDialog::OpenFile("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0");
+            if (!jsonPath.empty())
+            {
+                std::shared_ptr<Resource> importResource = ResourceUtility::CreateResource(resInfo.type);
+                std::string resName = ResourceUtility::GetResourceName(resInfo.resourceID);
+
+                importResource->SetHash(resInfo.hash);
+                importResource->SetResourceID(resInfo.resourceID);
+                importResource->SetHeaderLibraries(&resInfo.headerLibraries);
+                importResource->SetName(resName);
+
+                // Fully load the resource to get the correct offsets from the header library
+                if (resInfo.headerLibraries.size() > 0)
+                {
+                    importResource->LoadResource(0, resInfo.headerLibraries[0].chunkIndex, resInfo.headerLibraries[0].indexInLibrary, true, false, true);
+                }
+                else
+                {
+                    importResource->LoadResource(0, -1, -1, true, false, true);
+                }
+
+                if (resInfo.type == "TELI")
+                {
+                    std::shared_ptr<TextList> textList = std::static_pointer_cast<TextList>(importResource);
+                    textList->Deserialize();
+                    textList->ImportFromJson(jsonPath);
+                    textList->SerializeToBuffer();
+                }
+                else if (resInfo.type == "LOCR")
+                {
+                    std::shared_ptr<Localization> localization = std::static_pointer_cast<Localization>(importResource);
+                    localization->Deserialize();
+                    localization->ImportFromJson(jsonPath);
+                    localization->SerializeToBuffer();
+                }
+                else if (resInfo.type == "LOCM")
+                {
+                    std::shared_ptr<MultiLanguage> multiLanguage = std::static_pointer_cast<MultiLanguage>(importResource);
+                    multiLanguage->Deserialize();
+                    multiLanguage->ImportFromJson(jsonPath);
+                    multiLanguage->SerializeToBuffer();
+                }
+
+                std::string resourceLibPath = importResource->GetResourceLibraryFilePath();
+                std::string headerLibPath = importResource->GetHeaderLibraryFilePath();
+                unsigned int offsetInResLib = importResource->GetOffsetInResourceLibrary();
+                unsigned int offsetInHeaderLib = importResource->GetOffsetInHeaderLibrary();
+                const void* newData = importResource->GetResourceData();
+                unsigned int newDataSize = importResource->GetResourceDataSize();
+
+                if (ResourcePatcher::PatchResourceLibrary(resourceLibPath, headerLibPath, offsetInResLib, offsetInHeaderLib, newData, newDataSize))
+                {
+                    Logger::GetInstance().Log(Logger::Level::Info, "Resource patched successfully.");
+                }
+                else
+                {
+                    Logger::GetInstance().Log(Logger::Level::Error, "Failed to patch resource.");
+                }
+            }
+        }
     }
 }
 
@@ -687,13 +804,18 @@ void ResourceBrowserPanel::CreateResourceDocument(const ResourceNode& resourceNo
         resourceDocument = std::static_pointer_cast<Document>(physicsDocument);
     }
 
+    if (!resource || !resourceDocument)
+    {
+        Logger::GetInstance().Log(Logger::Level::Warning, "Cannot open resource: unsupported type.");
+        return;
+    }
+
     resource->SetHash(resourceInfo.hash);
     resource->SetResourceID(resourceInfo.resourceID);
     resource->SetHeaderLibraries(&resourceInfo.headerLibraries);
     resource->SetName(resourceName);
 
     Editor::GetInstance().GetDocuments().push_back(resourceDocument);
-
     std::thread thread(&ResourceBrowserPanel::LoadResource, this, resource, resourceNode, true);
 
     thread.detach();

@@ -1,4 +1,6 @@
 #include "UI/Panels/LocalizationPanel.h"
+#include "Utility/FileDialog.h"
+#include "Utility/ResourcePatcher.h"
 
 LocalizationPanel::LocalizationPanel(const char* name, const char* icon, std::shared_ptr<Localization> localizationResource) : BasePanel(name, icon)
 {
@@ -23,6 +25,47 @@ void LocalizationPanel::Render()
 
 		return;
 	}
+
+	if (ImGui::Button("Import JSON"))
+	{
+		std::string filePath = FileDialog::OpenFile("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0");
+		if (!filePath.empty())
+		{
+			localizationResource->ImportFromJson(filePath);
+		}
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Export RAW"))
+	{
+		std::string filePath = FileDialog::SaveFile("RAW Files (*.raw)\0*.raw\0All Files (*.*)\0*.*\0");
+		if (!filePath.empty())
+		{
+			localizationResource->ExportRawData(filePath);
+		}
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Patch Back to Game"))
+	{
+		localizationResource->SerializeToBuffer(); // Ensure buffer is up to date
+		
+		std::string resourceLibPath = localizationResource->GetResourceLibraryFilePath();
+		std::string headerLibPath = localizationResource->GetHeaderLibraryFilePath();
+		unsigned int offsetInResLib = localizationResource->GetOffsetInResourceLibrary();
+		unsigned int offsetInHeaderLib = localizationResource->GetOffsetInHeaderLibrary();
+		const void* newData = localizationResource->GetResourceData();
+		unsigned int newDataSize = localizationResource->GetResourceDataSize();
+
+		if (ResourcePatcher::PatchResourceLibrary(resourceLibPath, headerLibPath, offsetInResLib, offsetInHeaderLib, newData, newDataSize))
+		{
+			// Success
+		}
+	}
+
+	ImGui::Separator();
 
 	if (!UI::BeginProperties("Localization", tableColumns))
 	{

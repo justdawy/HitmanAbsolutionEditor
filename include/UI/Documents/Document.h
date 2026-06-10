@@ -41,7 +41,8 @@ public:
         GFXMovie,
         AnimationDatabase,
         SoundDefinitions,
-        RenderPrimitive
+        RenderPrimitive,
+        DeepSearch
     };
 
     Document(const char* name, const char* icon, const Type type, const unsigned long long runtimeResourceID = -1, const bool hasToolBar = false, const ImGuiID dockID = 0);

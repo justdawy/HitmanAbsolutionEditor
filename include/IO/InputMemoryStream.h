@@ -40,7 +40,7 @@ public:
 	template <>
 	void* Read(const size_t size)
 	{
-		void* buffer = operator new(size);
+		void* buffer = new char[size];
 
 		memcpy(buffer, reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(this->buffer) + position), size);
 

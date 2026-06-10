@@ -1,4 +1,6 @@
 #include "UI/Panels/MultiLanguagePanel.h"
+#include "Utility/FileDialog.h"
+#include "Utility/ResourcePatcher.h"
 
 MultiLanguagePanel::MultiLanguagePanel(const char* name, const char* icon, std::shared_ptr<MultiLanguage> multiLanguageResource) : BasePanel(name, icon)
 {
@@ -23,6 +25,47 @@ void MultiLanguagePanel::Render()
 
 		return;
 	}
+
+	if (ImGui::Button("Import JSON"))
+	{
+		std::string filePath = FileDialog::OpenFile("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0");
+		if (!filePath.empty())
+		{
+			multiLanguageResource->ImportFromJson(filePath);
+		}
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Export RAW"))
+	{
+		std::string filePath = FileDialog::SaveFile("RAW Files (*.raw)\0*.raw\0All Files (*.*)\0*.*\0");
+		if (!filePath.empty())
+		{
+			multiLanguageResource->ExportRawData(filePath);
+		}
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Patch Back to Game"))
+	{
+		multiLanguageResource->SerializeToBuffer(); // Ensure buffer is up to date
+		
+		std::string resourceLibPath = multiLanguageResource->GetResourceLibraryFilePath();
+		std::string headerLibPath = multiLanguageResource->GetHeaderLibraryFilePath();
+		unsigned int offsetInResLib = multiLanguageResource->GetOffsetInResourceLibrary();
+		unsigned int offsetInHeaderLib = multiLanguageResource->GetOffsetInHeaderLibrary();
+		const void* newData = multiLanguageResource->GetResourceData();
+		unsigned int newDataSize = multiLanguageResource->GetResourceDataSize();
+
+		if (ResourcePatcher::PatchResourceLibrary(resourceLibPath, headerLibPath, offsetInResLib, offsetInHeaderLib, newData, newDataSize))
+		{
+			// Success
+		}
+	}
+
+	ImGui::Separator();
 
 	if (!UI::BeginProperties("MultiLanguage", tableColumns))
 	{

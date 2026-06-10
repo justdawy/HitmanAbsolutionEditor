@@ -4,6 +4,7 @@
 #include <UI/Documents/LibraryInfoDocument.h>
 #include <UI/Documents/HeaderLibrariesSearchDocument.h>
 #include <UI/Documents/HashMapSearchDocument.h>
+#include <UI/Documents/DeepSearchDocument.h>
 #include <UI/Panels/SceneHierarchyPanel.h>
 #include <UI/Panels/SceneViewportPanel.h>
 #include <UI/Panels/ConsolePanel.h>
@@ -110,6 +111,9 @@ void SceneDocument::RenderMenuBar()
 
             if (ImGui::MenuItem(deepSearchLabel.c_str()))
             {
+                std::shared_ptr<DeepSearchDocument> deepSearchDocument = std::make_shared<DeepSearchDocument>("Deep Search", ICON_MDI_FILE_DOCUMENT, Document::Type::DeepSearch, defaultDockID);
+
+                Editor::GetInstance().GetDocuments().push_back(deepSearchDocument);
             }
 
             ImGui::EndMenu();

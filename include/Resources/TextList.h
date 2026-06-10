@@ -16,6 +16,8 @@ public:
 	void Export(const std::string& outputPath, const std::string& exportOption) override;
 	std::vector<Entry>& GetEntries();
 	void SerializeToJson(const std::string& outputFilePath);
+	void ImportFromJson(const std::string& inputFilePath);
+	void SerializeToBuffer();
 
 private:
 	std::vector<Entry> entries;

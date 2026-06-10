@@ -1,7 +1,8 @@
 #include "Resources/TextList.h"
 #include "Utility/StringUtility.h"
 #include "Registry/TextListHashRegistry.h"
-
+#include <rapidjson/document.h>
+#include "IO/BinaryWriter.h"
 void TextList::Deserialize()
 {
 	BinaryReader binaryReader = BinaryReader(resourceData, resourceDataSize);
@@ -98,4 +99,65 @@ void TextList::SerializeToJson(const std::string& outputFilePath)
 	outputFileStream << stringBuffer.GetString();
 
 	outputFileStream.close();
+}
+
+void TextList::ImportFromJson(const std::string& inputFilePath)
+{
+	std::ifstream inputFileStream(inputFilePath);
+	std::string jsonString((std::istreambuf_iterator<char>(inputFileStream)), std::istreambuf_iterator<char>());
+	inputFileStream.close();
+
+	rapidjson::Document document;
+	document.Parse(jsonString.c_str());
+
+	if (document.HasParseError() || !document.IsObject() || !document.HasMember("entries") || !document["entries"].IsArray())
+	{
+		return; // Or throw an error
+	}
+
+	entries.clear();
+
+	const rapidjson::Value& entriesArray = document["entries"];
+	for (rapidjson::SizeType i = 0; i < entriesArray.Size(); i++)
+	{
+		const rapidjson::Value& entryObj = entriesArray[i];
+		Entry entry;
+		
+		std::string hashString = entryObj["hash"].GetString();
+		entry.key = static_cast<unsigned int>(std::stoul(hashString, nullptr, 16));
+		
+		if (entryObj["name"].IsString())
+		{
+			entry.name = entryObj["name"].GetString();
+		}
+		
+		entry.text = entryObj["text"].GetString();
+		
+		entries.push_back(entry);
+	}
+	
+	SerializeToBuffer();
+}
+
+void TextList::SerializeToBuffer()
+{
+	BinaryWriter binaryWriter(1024); // OutputMemoryStream backed
+	
+	binaryWriter.Write<unsigned int>(static_cast<unsigned int>(entries.size()));
+	
+	for (size_t i = 0; i < entries.size(); ++i)
+	{
+		binaryWriter.Write<unsigned int>(entries[i].key);
+		binaryWriter.Write<unsigned int>(static_cast<unsigned int>(entries[i].text.length()));
+		binaryWriter.WriteString(entries[i].text);
+	}
+	
+	if (resourceData)
+	{
+		delete[] resourceData;
+	}
+	
+	resourceDataSize = static_cast<unsigned int>(binaryWriter.GetPosition());
+	resourceData = new char[resourceDataSize];
+	memcpy(resourceData, binaryWriter.GetBuffer(), resourceDataSize);
 }

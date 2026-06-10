@@ -16,6 +16,8 @@ public:
 	};
 
 	void Export(const std::string& outputPath, const std::string& exportOption) override;
+	void ImportFromSWF(const std::string& filePath);
+	bool PatchBackToGame();
 	void GetTextureData(void*& textureData, unsigned int& textureDataSize, bool& isDDSTexture);
 	void CreateTextureFromMemory();
 	const Format GetFormat() const;

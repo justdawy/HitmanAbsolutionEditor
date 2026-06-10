@@ -38,7 +38,7 @@ public:
 	template <>
 	void* Read(const size_t size)
 	{
-		void* buffer = operator new(size);
+		void* buffer = new char[size];
 
 		inputFileStream.read(reinterpret_cast<char*>(buffer), size);
 

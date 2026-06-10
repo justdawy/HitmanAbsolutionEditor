@@ -3,33 +3,48 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <string>
+#include <atomic>
+#include <mutex>
+#include <thread>
 
 #include "BasePanel.h"
 
 class DeepSearchPanel : public BasePanel
 {
 public:
-	struct TreeNode
+	struct SearchResult
 	{
 		unsigned int index;
-		std::string name;
-		std::vector<TreeNode> children;
+		std::string resourceID;
+		std::string hashStr;
+		unsigned long long hash;
+		std::string type;
 	};
 
-	HeaderLibrariesSearchPanel(const char* name, const char* icon);
+	DeepSearchPanel(const char* name, const char* icon);
+	~DeepSearchPanel();
 	void Render() override;
-	void RenderTree(TreeNode& treeNode);
-	void LoadHeaderLibraryResourceIDs();
 	void LoadResourceTypes();
-	void FilterHeaderLibraryResourceIDs(const char* hint, std::map<std::string, bool*>& filteredHeaderLibraryResourceIDs);
-	void SearchHeaderLibraries(std::map<std::string, bool*>& filteredHeaderLibraryResourceIDs);
+	void PerformDeepSearch();
+	void RenderTree(SearchResult& result);
 
 private:
-	std::map<std::string, bool> headerLibraryResourceIDs;
+	void StopSearch();
+
 	std::map<std::string, bool> resourceTypes;
-	char headerLibraryResourceID[512]{ "" };
 	char searchText[512]{ "" };
-	std::vector<TreeNode> treeNodes;
+	
+	std::vector<SearchResult> searchResults;
+	std::mutex resultsMutex;
+	
+	std::atomic<bool> isSearching{ false };
+	std::atomic<bool> stopSearchRequested{ false };
+	std::thread searchThread;
+	
+	int totalResourcesToSearch = 0;
+	std::atomic<int> resourcesSearched{ 0 };
+	
+	unsigned int selectedNodeIndex = -1;
 	std::set<unsigned int> selectedNodeIndices;
-	unsigned int selectedNodeIndex;
 };

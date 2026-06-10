@@ -26,12 +26,12 @@ Resource::~Resource()
 {
 	if (headerData)
 	{
-		delete[] headerData;
+		delete[] static_cast<char*>(headerData);
 	}
 
 	if (resourceData)
 	{
-		delete[] resourceData;
+		delete[] static_cast<char*>(resourceData);
 	}
 }
 
@@ -268,7 +268,7 @@ void Resource::LoadResourceData(BinaryReader& headerLibraryBinaryReader, const u
 
 void Resource::DeleteResourceData()
 {
-	delete[] resourceData;
+	delete[] static_cast<char*>(resourceData);
 
 	resourceData = nullptr;
 }

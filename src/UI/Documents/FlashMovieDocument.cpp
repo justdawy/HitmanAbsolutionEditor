@@ -7,6 +7,7 @@
 #include <Editor.h>
 #include <Registry/ResourceInfoRegistry.h>
 #include <Utility/UI.h>
+#include <Utility/FileDialog.h>
 
 FlashMovieDocument::FlashMovieDocument(const char* name, const char* icon, const Type type, const unsigned long long runtimeResourceID, const bool hasToolBar, const ImGuiID dockID) : Document(name, icon, type, runtimeResourceID, hasToolBar, dockID)
 {
@@ -14,7 +15,7 @@ FlashMovieDocument::FlashMovieDocument(const char* name, const char* icon, const
     sliderValue = 0.f;
 
     const std::string& swffResourceID = ResourceInfoRegistry::GetInstance().GetResourceInfo(runtimeResourceID).resourceID;
-    const bool hasSwfFile = swffResourceID.ends_with(".swf].pc_swf");
+    const bool hasSwfFile = swffResourceID.contains(".swf");
     std::shared_ptr<TextureViewerPanel> textureViewerPanel;
 
     if (hasSwfFile)
@@ -105,6 +106,28 @@ void FlashMovieDocument::RenderMenuBar()
     static std::string exportResourceLabel = std::format("{} Export Resource", ICON_MDI_EXPORT);
     static bool showResourceExportPopup = false;
 
+    if (ImGui::BeginMenu("Import"))
+    {
+        if (ImGui::MenuItem("Import & Patch from SWF"))
+        {
+            std::string filePath = FileDialog::OpenFile("SWF Files (*.swf)\0*.swf\0All Files (*.*)\0*.*\0");
+            if (!filePath.empty())
+            {
+                flashMovie->ImportFromSWF(filePath);
+                if (flashMovie->PatchBackToGame())
+                {
+                    Logger::GetInstance().Log(Logger::Level::Info, "Successfully patched SWF into resource.");
+                }
+                else
+                {
+                    Logger::GetInstance().Log(Logger::Level::Error, "Failed to patch SWF into resource.");
+                }
+            }
+        }
+
+        ImGui::EndMenu();
+    }
+
     if (ImGui::BeginMenu("Export"))
     {
         if (ImGui::MenuItem(exportResourceLabel.c_str()))
@@ -185,7 +208,7 @@ void FlashMovieDocument::RenderToolBar()
 
 void FlashMovieDocument::OnResourceLoaded()
 {
-    const bool hasSwfFile = flashMovie->GetResourceID().ends_with(".swf].pc_swf");
+    const bool hasSwfFile = flashMovie->GetResourceID().contains(".swf");
 
     if (!hasSwfFile)
     {

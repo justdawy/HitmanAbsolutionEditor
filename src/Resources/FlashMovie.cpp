@@ -3,6 +3,7 @@
 
 #include "Resources/FlashMovie.h"
 #include "Editor.h"
+#include "Utility/ResourcePatcher.h"
 
 void FlashMovie::Export(const std::string& outputPath, const std::string& exportOption)
 {
@@ -22,6 +23,54 @@ void FlashMovie::Export(const std::string& outputPath, const std::string& export
 
 		binaryWriter.Write(textureData, textureDataSize);
 	}
+}
+
+void FlashMovie::ImportFromSWF(const std::string& filePath)
+{
+	BinaryReader binaryReader = BinaryReader(resourceData, resourceDataSize);
+	const unsigned char type = binaryReader.Read<unsigned char>();
+	const unsigned int fileOffset = binaryReader.Read<unsigned int>();
+
+	// The header is fileOffset + 1 bytes long
+	unsigned int headerSize = fileOffset + 1;
+
+	// Read the new SWF file
+	BinaryReader swfReader = BinaryReader(filePath);
+	unsigned int newSwfSize = swfReader.GetSize();
+	void* newSwfData = swfReader.Read<void>(newSwfSize);
+
+	// Create new buffer
+	unsigned int newResourceDataSize = headerSize + newSwfSize;
+	void* newResourceData = malloc(newResourceDataSize);
+
+	// Copy header
+	memcpy(newResourceData, resourceData, headerSize);
+	
+	// Copy new SWF data
+	memcpy(static_cast<char*>(newResourceData) + headerSize, newSwfData, newSwfSize);
+
+	// Free the temporary SWF data
+	operator delete(newSwfData);
+
+	// Free old resourceData if necessary
+	if (resourceData)
+	{
+		free(resourceData);
+	}
+
+	// Assign new resourceData
+	resourceData = newResourceData;
+	resourceDataSize = newResourceDataSize;
+}
+
+bool FlashMovie::PatchBackToGame()
+{
+	std::string resourceLibPath = GetResourceLibraryFilePath();
+	std::string headerLibPath = GetHeaderLibraryFilePath();
+	unsigned int offsetInResLib = GetOffsetInResourceLibrary();
+	unsigned int offsetInHeaderLib = GetOffsetInHeaderLibrary();
+
+	return ResourcePatcher::PatchResourceLibrary(resourceLibPath, headerLibPath, offsetInResLib, offsetInHeaderLib, resourceData, resourceDataSize);
 }
 
 void FlashMovie::GetTextureData(void*& textureData, unsigned int& textureDataSize, bool& isDDSTexture)
@@ -61,16 +110,23 @@ void FlashMovie::CreateTextureFromMemory()
 		DirectX::CreateWICTextureFromMemory(Editor::GetInstance().GetDirectXRenderer()->GetD3D11Device(), static_cast<unsigned char*>(textureData), textureDataSize, &texture, &textureView);
 	}
 
-	ID3D11Texture2D* texture2D = nullptr;
-	D3D11_TEXTURE2D_DESC textureDesc;
+	if (texture)
+	{
+		ID3D11Texture2D* texture2D = nullptr;
+		D3D11_TEXTURE2D_DESC textureDesc;
 
-	texture->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&texture2D));
-	texture2D->GetDesc(&textureDesc);
+		texture->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&texture2D));
+		
+		if (texture2D)
+		{
+			texture2D->GetDesc(&textureDesc);
 
-	textureWidth = textureDesc.Width;
-	textureHeight = textureDesc.Height;
+			textureWidth = textureDesc.Width;
+			textureHeight = textureDesc.Height;
 
-	texture2D->Release();
+			texture2D->Release();
+		}
+	}
 }
 
 const FlashMovie::Format FlashMovie::GetFormat() const
