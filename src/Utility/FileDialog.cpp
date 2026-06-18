@@ -64,7 +64,7 @@ std::string FileDialog::OpenFile(const char* filters)
     ofn.lpstrFilter = filters;
     ofn.lpstrFile = filePath;
     ofn.nMaxFile = MAX_PATH;
-    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
 
     if (GetOpenFileNameA(&ofn))
     {
@@ -84,7 +84,7 @@ std::string FileDialog::SaveFile(const char* filters)
     ofn.lpstrFilter = filters;
     ofn.lpstrFile = filePath;
     ofn.nMaxFile = MAX_PATH;
-    ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+    ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
 
     if (GetSaveFileNameA(&ofn))
     {
@@ -108,7 +108,7 @@ void FileDialog::OpenSaveFileDialog(const char* defaultFileName, const char* def
     ofn.lpstrFile = filePath;
     ofn.nMaxFile = MAX_PATH;
     ofn.lpstrDefExt = defaultExtension;
-    ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+    ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
 
     if (GetSaveFileNameA(&ofn))
     {

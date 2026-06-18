@@ -27,5 +27,5 @@ private:
 
 	std::string runtimeFolderPath;
 	bool enableDiscordRPC = true;
-	std::string backgroundImagePath;
+	std::string backgroundImagePath = "assets/images/background.jpg";
 };

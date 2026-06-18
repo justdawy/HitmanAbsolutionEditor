@@ -34,7 +34,8 @@ public:
 
 	void UpdateDiscordPresence();
 	void LoadBackgroundImage(const std::string& path);
-	void SetShowSettingsWindow(bool show);
+	void SetSettingsPanelFocused(bool focused);
+	bool IsSettingsPanelFocused() const;
 
 private:
 	Editor();
@@ -55,5 +56,5 @@ private:
 	bool floatingToolsOnlyVisibleWhenParentIsFocused;
 
 	ID3D11ShaderResourceView* backgroundTextureSRV = nullptr;
-	bool showSettingsWindow = false;
+	bool isSettingsPanelFocused = false;
 };

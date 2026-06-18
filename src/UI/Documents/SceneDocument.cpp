@@ -9,6 +9,7 @@
 #include <UI/Panels/SceneViewportPanel.h>
 #include <UI/Panels/ConsolePanel.h>
 #include <UI/Panels/ResourceBrowserPanel.h>
+#include <UI/Panels/SettingsPanel.h>
 #include <Editor.h>
 #include <Logger.h>
 
@@ -18,11 +19,13 @@ SceneDocument::SceneDocument(const char* name, const char* icon, const Type type
     std::shared_ptr<SceneViewportPanel> sceneViewportPanel = std::make_shared<SceneViewportPanel>("Scene Viewport", ICON_MDI_MONITOR);
     std::shared_ptr<ConsolePanel> consolePanel = std::make_shared<ConsolePanel>("Console", ICON_MDI_CONSOLE);
     std::shared_ptr<ResourceBrowserPanel> resourceBrowserPanel = std::make_shared<ResourceBrowserPanel>("Resource Browser", ICON_MDI_FOLDER_OPEN);
+    std::shared_ptr<SettingsPanel> settingsPanel = std::make_shared<SettingsPanel>("Settings", ICON_MDI_COG);
 
     AddPanel(sceneHierarchyPanel);
     AddPanel(sceneViewportPanel);
     AddPanel(consolePanel);
     AddPanel(resourceBrowserPanel);
+    AddPanel(settingsPanel);
 }
 
 void SceneDocument::CreateLayout(const ImGuiID dockspaceID, const ImVec2 dockspaceSize)
@@ -36,6 +39,7 @@ void SceneDocument::CreateLayout(const ImGuiID dockspaceID, const ImVec2 dockspa
     ImGui::DockBuilderDockWindow(CalculatePanelID(1, currentDockspaceID).c_str(), mainDockID);
     ImGui::DockBuilderDockWindow(CalculatePanelID(2, currentDockspaceID).c_str(), downDockID);
     ImGui::DockBuilderDockWindow(CalculatePanelID(3, currentDockspaceID).c_str(), rightDockID);
+    ImGui::DockBuilderDockWindow(CalculatePanelID(4, currentDockspaceID).c_str(), mainDockID);
     ImGui::DockBuilderFinish(dockspaceID);
 }
 
@@ -121,7 +125,13 @@ void SceneDocument::RenderMenuBar()
         {
             if (ImGui::MenuItem(settingsLabel.c_str()))
             {
-                Editor::GetInstance().SetShowSettingsWindow(true);
+                for (size_t i = 0; i < panels.size(); ++i)
+                {
+                    if (std::string(panels[i]->GetName()).find("Settings") != std::string::npos)
+                    {
+                        panels[i]->SetOpen(true);
+                    }
+                }
             }
 
             if (ImGui::MenuItem(ICON_MDI_RESTORE " Restore Backups"))
