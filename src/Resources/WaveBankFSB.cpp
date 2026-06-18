@@ -1,4 +1,5 @@
 #include <format>
+#include <algorithm>
 #include "Resources/WaveBankFSB.h"
 #include "FSB/FSB.h"
 #include "FSB/Container.h"
@@ -33,7 +34,13 @@ void WaveBankFSB::Export(const std::string& outputPath, const std::string& expor
 		}
 		for (size_t i = 0; i < audioSamples.size(); ++i)
 		{
-			const std::string outputFilePath = std::format("{}\\{}.{}", outputPath, audioSamples[i]->name, extension);
+			std::string sanitizedSampleName = audioSamples[i]->name;
+			std::string invalidChars = "<>:\"|?*/\\";
+			for (char c : invalidChars)
+			{
+				std::replace(sanitizedSampleName.begin(), sanitizedSampleName.end(), c, '_');
+			}
+			const std::string outputFilePath = std::format("{}\\{}.{}", outputPath, sanitizedSampleName, extension);
 			BinaryWriter binaryWriter = BinaryWriter(outputFilePath);
 			binaryWriter.Write(audioSamples[i]->data, audioSamples[i]->dataSize);
 		}
@@ -52,19 +59,23 @@ void WaveBankFSB::ConvertFSB5ToOGG()
 	void* fsb5Data = nullptr;
 	unsigned int fsb5Size = 0;
 	GetFSB5Data(fsb5Data, fsb5Size);
+	if (!fsb5Data || fsb5Size == 0)
+	{
+		throw std::runtime_error("Empty or invalid FSB5 data");
+	}
 	BinaryReader binaryReader = BinaryReader(fsb5Data, fsb5Size);
 	FSB::Container container = FSB::Container(binaryReader);
 	audioSamples.clear();
 	audioSamples.reserve(container.Samples().size());
 	for (const FSB::Sample& sample : container.Samples())
 	{
-		void* data = operator new(sample.size);
-		BinaryWriter binaryWriter = BinaryWriter(data, sample.size);
+		BinaryWriter binaryWriter(sample.size + 8192); // Extra capacity for headers
 		container.ExtractSample(sample, binaryWriter);
 		std::shared_ptr<AudioSample> audioSample = std::make_shared<AudioSample>();
 		audioSample->name = sample.name;
-		audioSample->data = binaryWriter.GetBuffer();
 		audioSample->dataSize = static_cast<unsigned int>(binaryWriter.GetPosition());
+		audioSample->data = operator new(audioSample->dataSize);
+		memcpy(audioSample->data, binaryWriter.GetBuffer(), audioSample->dataSize);
 		audioSamples.push_back(audioSample);
 	}
 }
@@ -73,19 +84,23 @@ void WaveBankFSB::ConvertFSB5ToWAV()
 	void* fsb5Data = nullptr;
 	unsigned int fsb5Size = 0;
 	GetFSB5Data(fsb5Data, fsb5Size);
+	if (!fsb5Data || fsb5Size == 0)
+	{
+		throw std::runtime_error("Empty or invalid FSB5 data");
+	}
 	BinaryReader binaryReader = BinaryReader(fsb5Data, fsb5Size);
 	FSB::Container container = FSB::Container(binaryReader);
 	audioSamples.clear();
 	audioSamples.reserve(container.Samples().size());
 	for (const FSB::Sample& sample : container.Samples())
 	{
-		void* data = operator new(sample.size);
-		BinaryWriter binaryWriter = BinaryWriter(data, sample.size);
+		BinaryWriter binaryWriter(sample.size + 8192); // Extra capacity for headers
 		container.ExtractSample(sample, binaryWriter);
 		std::shared_ptr<AudioSample> audioSample = std::make_shared<AudioSample>();
 		audioSample->name = sample.name;
-		audioSample->data = binaryWriter.GetBuffer();
 		audioSample->dataSize = static_cast<unsigned int>(binaryWriter.GetPosition());
+		audioSample->data = operator new(audioSample->dataSize);
+		memcpy(audioSample->data, binaryWriter.GetBuffer(), audioSample->dataSize);
 		audioSamples.push_back(audioSample);
 	}
 }

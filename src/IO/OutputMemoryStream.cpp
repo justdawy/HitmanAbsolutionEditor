@@ -13,7 +13,7 @@ OutputMemoryStream::~OutputMemoryStream()
 {
     if (!isExternalBuffer)
     {
-        delete[] buffer;
+        free(buffer);
     }
 }
 void* OutputMemoryStream::GetBuffer() const
@@ -62,6 +62,10 @@ void OutputMemoryStream::EnsureCapacity(const size_t size)
 {
     if (position + size > capacity)
     {
+        if (isExternalBuffer)
+        {
+            throw std::out_of_range("Cannot expand external OutputMemoryStream buffer");
+        }
         size_t newCapacity = capacity * 2;
         while (newCapacity < size)
         {

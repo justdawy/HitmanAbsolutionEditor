@@ -59,6 +59,8 @@ ResourceBrowserPanel::ResourceBrowserPanel(const char* name, const char* icon) :
     showFsbsPatchPopup = false;
     showBatchTeliExportPopup = false;
     showBatchTeliImportPopup = false;
+    showBatchFsbsExportPopup = false;
+    showBatchFsbsImportPopup = false;
     batchExportFormatIndex = 0;
     LoadResourceTypes();
     AddRootResourceNodes();
@@ -253,6 +255,27 @@ void ResourceBrowserPanel::Render()
             if (!inputFolder.empty())
             {
                 BatchImportTeliFiles(inputFolder);
+            }
+        }
+        if (showBatchFsbsExportPopup)
+        {
+            showBatchFsbsExportPopup = false;
+            std::string outputFolder = FileDialog::OpenFolder();
+            if (!outputFolder.empty())
+            {
+                batchFsbsHashes.clear();
+                batchFsbsNames.clear();
+                CollectFsbsChildren(batchFsbsParentPath, batchFsbsHashes, batchFsbsNames);
+                BatchExportFsbsFiles(outputFolder);
+            }
+        }
+        if (showBatchFsbsImportPopup)
+        {
+            showBatchFsbsImportPopup = false;
+            std::string inputFolder = FileDialog::OpenFolder();
+            if (!inputFolder.empty())
+            {
+                BatchImportFsbsFiles(inputFolder);
             }
         }
         if (showImportJsonPopup && resource && resource->IsResourceLoaded())
@@ -820,9 +843,10 @@ void ResourceBrowserPanel::RenderFolderContextMenu(ResourceNode& folderNode, con
     if (!hasTeli)
     {
         ImGui::TextDisabled("No TELI files in this folder");
-        return;
     }
-    static std::string exportLabel = std::format("{} Export All TELI Files", ICON_MDI_EXPORT);
+    else
+    {
+        static std::string exportLabel = std::format("{} Export All TELI Files", ICON_MDI_EXPORT);
     static std::string importLabel = std::format("{} Patch Back To Game (Import All JSON Files)", ICON_MDI_IMPORT);
     if (ImGui::MenuItem(exportLabel.c_str()))
     {
@@ -845,6 +869,35 @@ void ResourceBrowserPanel::RenderFolderContextMenu(ResourceNode& folderNode, con
     {
         batchTeliParentPath = folderPath;
         showBatchTeliImportPopup = true;
+    }
+    }
+
+    bool hasFsbs = false;
+    for (const auto& [hash, info] : resourcesInfo)
+    {
+        if (info.type != "FSBS")
+            continue;
+        if (info.resourceID.starts_with("[" + folderPath) || info.resourceID.starts_with("[[" + folderPath))
+        {
+            hasFsbs = true;
+            break;
+        }
+    }
+
+    if (hasFsbs)
+    {
+        static std::string exportFsbsLabel = std::format("{} Export All FSBS Files (Only .OGG Files)", ICON_MDI_EXPORT);
+        static std::string importFsbsLabel = std::format("{} Patch Back To Game (Import All OGG Files)", ICON_MDI_IMPORT);
+        if (ImGui::MenuItem(exportFsbsLabel.c_str()))
+        {
+            batchFsbsParentPath = folderPath;
+            showBatchFsbsExportPopup = true;
+        }
+        if (ImGui::MenuItem(importFsbsLabel.c_str()))
+        {
+            batchFsbsParentPath = folderPath;
+            showBatchFsbsImportPopup = true;
+        }
     }
 }
 void ResourceBrowserPanel::CollectTeliChildren(const std::string& folderPath,
@@ -1061,4 +1114,206 @@ void ResourceBrowserPanel::BatchImportTeliFiles(const std::string& inputFolder)
         }
     }
     Logger::GetInstance().Log(Logger::Level::Info, std::format("Batch import complete: {}/{} files patched", patchedCount, jsonFiles.size()));
+}
+
+void ResourceBrowserPanel::CollectFsbsChildren(const std::string& folderPath,
+    std::vector<unsigned long long>& outHashes,
+    std::vector<std::string>& outNames)
+{
+    const auto& resourcesInfo = ResourceInfoRegistry::GetInstance().GetResourcesInfo();
+    for (const auto& [hash, info] : resourcesInfo)
+    {
+        if (info.type != "FSBS")
+        {
+            continue;
+        }
+        if (!info.resourceID.starts_with("[" + folderPath) && !info.resourceID.starts_with("[[" + folderPath))
+        {
+            continue;
+        }
+        std::string resName = ResourceUtility::GetResourceName(info.resourceID);
+        outHashes.push_back(hash);
+        outNames.push_back(resName);
+    }
+}
+
+void ResourceBrowserPanel::BatchExportFsbsFiles(const std::string& outputFolder)
+{
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Batch exporting {} FSBS files to {}", batchFsbsHashes.size(), outputFolder));
+    unsigned int exportedCount = 0;
+    for (size_t i = 0; i < batchFsbsHashes.size(); ++i)
+    {
+        try
+        {
+            const ResourceInfoRegistry::ResourceInfo& resInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(batchFsbsHashes[i]);
+            std::shared_ptr<Resource> fsbsResource = ResourceUtility::CreateResource(resInfo.type);
+            std::string resName = batchFsbsNames[i];
+            fsbsResource->SetHash(resInfo.hash);
+            fsbsResource->SetResourceID(resInfo.resourceID);
+            fsbsResource->SetHeaderLibraries(&resInfo.headerLibraries);
+            fsbsResource->SetName(resName);
+            if (resInfo.headerLibraries.size() > 0)
+            {
+                fsbsResource->LoadResource(0, resInfo.headerLibraries[0].chunkIndex, resInfo.headerLibraries[0].indexInLibrary, false, false, true);
+            }
+            else
+            {
+                fsbsResource->LoadResource(0, -1, -1, false, false, true);
+            }
+            if (!fsbsResource->IsResourceLoaded())
+            {
+                Logger::GetInstance().Log(Logger::Level::Error, std::format("Failed to load FSBS resource: {}", resName));
+                continue;
+            }
+            std::string resID = resInfo.resourceID;
+            std::string lowerResID = StringUtility::ToLowerCase(resID);
+            std::string lowerParentPath = StringUtility::ToLowerCase(batchFsbsParentPath);
+            size_t pos = lowerResID.find(lowerParentPath);
+            std::string relativePath = "";
+            if (pos != std::string::npos)
+            {
+                size_t start = pos + batchFsbsParentPath.length();
+                size_t end = resID.find_last_of('/');
+                if (end != std::string::npos && end > start)
+                {
+                    relativePath = resID.substr(start, end - start);
+                }
+            }
+            if (relativePath.starts_with("/"))
+                relativePath = relativePath.substr(1);
+            std::replace(relativePath.begin(), relativePath.end(), '/', '\\');
+            std::string invalidChars = "<>:\"|?*";
+            for (char c : invalidChars)
+            {
+                std::replace(relativePath.begin(), relativePath.end(), c, '_');
+                std::replace(resName.begin(), resName.end(), c, '_');
+            }
+            std::string finalOutputFolder = outputFolder;
+            if (!relativePath.empty())
+            {
+                finalOutputFolder = std::format("{}\\{}", outputFolder, relativePath);
+            }
+            finalOutputFolder = std::format("{}\\{}", finalOutputFolder, resName);
+            if (!std::filesystem::exists(finalOutputFolder))
+            {
+                std::filesystem::create_directories(finalOutputFolder);
+            }
+            fsbsResource->Export(finalOutputFolder, "Folder (OGG Files)");
+            Logger::GetInstance().Log(Logger::Level::Info, std::format("Exported: {}", resName));
+            exportedCount++;
+        }
+        catch (const std::exception& e)
+        {
+            Logger::GetInstance().Log(Logger::Level::Error, std::format("Exception during export of file {}: {}", batchFsbsNames[i], e.what()));
+        }
+        catch (...)
+        {
+            Logger::GetInstance().Log(Logger::Level::Error, std::format("Unknown exception during export of file {}", batchFsbsNames[i]));
+        }
+    }
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Batch export complete: {}/{} files exported", exportedCount, batchFsbsHashes.size()));
+}
+
+void ResourceBrowserPanel::BatchImportFsbsFiles(const std::string& inputFolder)
+{
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Batch importing FSBS files from {}", inputFolder));
+    std::vector<std::string> oggFiles;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(inputFolder))
+    {
+        if (entry.is_regular_file())
+        {
+            std::string ext = entry.path().extension().string();
+            std::string lowerExt = StringUtility::ToLowerCase(ext);
+            if (lowerExt == ".ogg")
+            {
+                oggFiles.push_back(entry.path().string());
+            }
+        }
+    }
+    if (oggFiles.empty())
+    {
+        Logger::GetInstance().Log(Logger::Level::Warning, "No OGG files found in selected folder");
+        return;
+    }
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Found {} OGG files", oggFiles.size()));
+    std::vector<unsigned long long> fsbsHashes;
+    std::vector<std::string> fsbsNames;
+    CollectFsbsChildren(batchFsbsParentPath, fsbsHashes, fsbsNames);
+    unsigned int patchedCount = 0;
+    for (const auto& oggFile : oggFiles)
+    {
+        std::string parentFolderName = std::filesystem::path(oggFile).parent_path().filename().string();
+        std::string oggFileName = std::filesystem::path(oggFile).stem().string();
+        bool found = false;
+        for (size_t i = 0; i < fsbsHashes.size(); ++i)
+        {
+            if (fsbsNames[i] == parentFolderName || fsbsNames[i] == oggFileName)
+            {
+                try
+                {
+                    const ResourceInfoRegistry::ResourceInfo& resInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(fsbsHashes[i]);
+                    std::shared_ptr<Resource> fsbsResource = ResourceUtility::CreateResource(resInfo.type);
+                    fsbsResource->SetHash(resInfo.hash);
+                    fsbsResource->SetResourceID(resInfo.resourceID);
+                    fsbsResource->SetHeaderLibraries(&resInfo.headerLibraries);
+                    fsbsResource->SetName(fsbsNames[i]);
+                    if (resInfo.headerLibraries.size() > 0)
+                    {
+                        fsbsResource->LoadResource(0, resInfo.headerLibraries[0].chunkIndex, resInfo.headerLibraries[0].indexInLibrary, true, true, true);
+                    }
+                    else
+                    {
+                        fsbsResource->LoadResource(0, -1, -1, true, true, true);
+                    }
+                    if (!fsbsResource->IsResourceLoaded())
+                    {
+                        Logger::GetInstance().Log(Logger::Level::Error, std::format("Failed to load FSBS resource: {}", fsbsNames[i]));
+                        continue;
+                    }
+                    std::shared_ptr<WaveBankFSBS> waveBankFSBS = std::static_pointer_cast<WaveBankFSBS>(fsbsResource);
+                    int indexToReplace = 0;
+                    auto& samples = waveBankFSBS->GetAudioSamples();
+                    if (samples.empty())
+                    {
+                        waveBankFSBS->ConvertFSB5ToWAV();
+                    }
+                    if (samples.size() > 1)
+                    {
+                        for (size_t s = 0; s < samples.size(); ++s)
+                        {
+                            if (samples[s]->name == oggFileName)
+                            {
+                                indexToReplace = static_cast<int>(s);
+                                break;
+                            }
+                        }
+                    }
+                    if (waveBankFSBS->PatchResourceLibrary(oggFile, indexToReplace))
+                    {
+                        Logger::GetInstance().Log(Logger::Level::Info, std::format("Patched: {} from {}", fsbsNames[i], oggFile));
+                        patchedCount++;
+                    }
+                    else
+                    {
+                        Logger::GetInstance().Log(Logger::Level::Error, std::format("Failed to patch: {} from {}", fsbsNames[i], oggFile));
+                    }
+                    found = true;
+                }
+                catch (const std::exception& e)
+                {
+                    Logger::GetInstance().Log(Logger::Level::Error, std::format("Exception during import of file {}: {}", oggFile, e.what()));
+                }
+                catch (...)
+                {
+                    Logger::GetInstance().Log(Logger::Level::Error, std::format("Unknown exception during import of file {}", oggFile));
+                }
+                break;
+            }
+        }
+        if (!found)
+        {
+            Logger::GetInstance().Log(Logger::Level::Warning, std::format("No matching FSBS resource found for: {}", oggFile));
+        }
+    }
+    Logger::GetInstance().Log(Logger::Level::Info, std::format("Batch import complete: {}/{} files patched", patchedCount, oggFiles.size()));
 }

@@ -35,6 +35,11 @@ public:
 		std::vector<std::string>& outNames);
 	void BatchExportTeliFiles(const std::string& outputFolder, const std::string& exportFormat);
 	void BatchImportTeliFiles(const std::string& inputFolder);
+	void CollectFsbsChildren(const std::string& folderPath,
+		std::vector<unsigned long long>& outHashes,
+		std::vector<std::string>& outNames);
+	void BatchExportFsbsFiles(const std::string& outputFolder);
+	void BatchImportFsbsFiles(const std::string& inputFolder);
 private:
 	ResourceNode assemblyNode;
 	ResourceNode modulesNode;
@@ -54,6 +59,13 @@ private:
 	std::string batchTeliParentPath;
 	std::vector<unsigned long long> batchTeliHashes;
 	std::vector<std::string> batchTeliNames;
+	
+	bool showBatchFsbsExportPopup;
+	bool showBatchFsbsImportPopup;
+	std::string batchFsbsParentPath;
+	std::vector<unsigned long long> batchFsbsHashes;
+	std::vector<std::string> batchFsbsNames;
+
 	std::vector<std::string> detectedLanguages;
 	std::vector<bool> selectedLanguages;
 	int batchExportFormatIndex;

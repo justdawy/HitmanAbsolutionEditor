@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <stdexcept>
 #include "SeekOrigin.h"
 class InputMemoryStream
 {
@@ -13,49 +14,55 @@ public:
 	template <typename T>
 	T Read()
 	{
+		if (position + sizeof(T) > size) throw std::out_of_range("Read out of bounds");
 		T data{};
 		data = *reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(this->buffer) + position);
 		position += sizeof(T);
 		return data;
 	}
 	template <typename T>
-	T* Read(const size_t size)
+	T* Read(const size_t readSize)
 	{
-		T* buffer = new T[size];
-		memcpy(buffer, reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(this->buffer) + position), sizeof(T) * size);
-		position += size;
+		if (position + sizeof(T) * readSize > size) throw std::out_of_range("Read out of bounds");
+		T* buffer = new T[readSize];
+		memcpy(buffer, reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(this->buffer) + position), sizeof(T) * readSize);
+		position += readSize;
 		return buffer;
 	}
 	template <>
-	void* Read(const size_t size)
+	void* Read(const size_t readSize)
 	{
-		void* buffer = operator new(size);
-		memcpy(buffer, reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(this->buffer) + position), size);
-		position += size;
+		if (position + readSize > size) throw std::out_of_range("Read out of bounds");
+		void* buffer = operator new(readSize);
+		memcpy(buffer, reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(this->buffer) + position), readSize);
+		position += readSize;
 		return buffer;
 	}
 	template <typename T>
-	T* Read(const size_t size) const
+	T* Read(const size_t readSize) const
 	{
-		T* buffer = new T[size];
-		memcpy(buffer, reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(this->buffer) + position), sizeof(T) * size);
-		position += size;
+		if (position + sizeof(T) * readSize > size) throw std::out_of_range("Read out of bounds");
+		T* buffer = new T[readSize];
+		memcpy(buffer, reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(this->buffer) + position), sizeof(T) * readSize);
+		position += readSize; // Mutable/mutable workaround
 		return buffer;
 	}
 	template <typename T>
-	void Read(T* data, const size_t size)
+	void Read(T* data, const size_t readSize)
 	{
-		memcpy(data, reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(buffer) + position), sizeof(T) * size);
-		position += size;
+		if (position + sizeof(T) * readSize > size) throw std::out_of_range("Read out of bounds");
+		memcpy(data, reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(buffer) + position), sizeof(T) * readSize);
+		position += sizeof(T) * readSize;
 	}
 	template <>
-	void Read(void* data, const size_t size)
+	void Read(void* data, const size_t readSize)
 	{
-		memcpy(data, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(buffer) + position), size);
-		position += size;
+		if (position + readSize > size) throw std::out_of_range("Read out of bounds");
+		memcpy(data, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(buffer) + position), readSize);
+		position += readSize;
 	}
 	std::string ReadString(const char delimiter = '\0');
-	std::string ReadString(const size_t size, const bool isNullTerminated = true);
+	std::string ReadString(const size_t readSize, const bool isNullTerminated = true);
 	void Skip(const size_t count);
 	void Seek(const size_t offset, const SeekOrigin seekOrigin = SeekOrigin::Begin);
 	void AlignTo(const unsigned char alignment);

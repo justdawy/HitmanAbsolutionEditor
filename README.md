@@ -11,6 +11,7 @@ A powerful C++23 desktop editor for modifying **Hitman: Absolution** game resour
 This fork introduces significant improvements over the original release, resolving many critical errors and optimizing the core architecture.
 
 **Key Additions & Fixes:**
+* **Batch Audio Import/Export**: Added the ability to mass export and import FSBS audio resources as OGG files. Includes robust memory management fixes (bounds checking, memory leak/corruption fixes) to ensure the editor won't crash when encountering corrupted game files.
 * **Crash Fixes**: Resolved critical crashes when previewing audio files directly in the editor, allowing seamless playback and inspection.
 * **Texture Viewer**: Restored and fixed the ability to view `.dds` textures natively within the editor.
 * **App Icon**: Added a proper application icon.

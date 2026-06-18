@@ -101,7 +101,7 @@ namespace FSB
         {
             const auto i = std::lower_bound(headers, headersEnd, crc32, HeadersInfoCRC32Less());
             std::string message = std::format("Headers with CRC-32 equal {} not found.", crc32);
-            if (headersEnd == i && i->crc32 != crc32)
+            if (i == headersEnd || i->crc32 != crc32)
             {
                 throw std::invalid_argument(message);
             }

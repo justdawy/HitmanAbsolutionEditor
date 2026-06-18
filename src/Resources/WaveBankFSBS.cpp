@@ -15,6 +15,10 @@ FSB::Format WaveBankFSBS::GetFormat()
 	void* fsb5Data = nullptr;
 	unsigned int fsb5Size = 0;
 	GetFSB5Data(fsb5Data, fsb5Size);
+	if (!fsb5Data || fsb5Size < sizeof(FSB::Header))
+	{
+		return static_cast<FSB::Format>(0);
+	}
 	BinaryReader binaryReader = BinaryReader(fsb5Data, fsb5Size);
 	unsigned int offset = offsetof(FSB::Header, mode);
 	binaryReader.Seek(offset);
@@ -23,6 +27,10 @@ FSB::Format WaveBankFSBS::GetFormat()
 void WaveBankFSBS::GetFSB5Data(void*& fsb5Data, unsigned int& fsb5Size)
 {
 	const unsigned int fsb5DataOffset = FindFSB5DataOffsetInFSBS();
+	if (fsb5DataOffset == static_cast<unsigned int>(-1))
+	{
+		throw std::runtime_error("FSB5 data not found in FSBS resource");
+	}
 	BinaryReader binaryReader = BinaryReader(resourceData, resourceDataSize);
 	binaryReader.Seek(fsb5DataOffset);
 	fsb5Data = binaryReader.GetBuffer(true);
@@ -52,6 +60,10 @@ void WaveBankFSBS::GetFilePaths(std::vector<std::string>& filePaths)
 }
 unsigned int WaveBankFSBS::FindFSB5DataOffsetInFSBS()
 {
+	if (!resourceData || resourceDataSize < 40)
+	{
+		return static_cast<unsigned int>(-1);
+	}
 	BinaryReader binaryReader = BinaryReader(resourceData, resourceDataSize);
 	binaryReader.Seek(24 + 16);
 	unsigned int magic = binaryReader.Read<unsigned int>();
@@ -68,20 +80,28 @@ unsigned int WaveBankFSBS::FindFSB5DataOffsetInFSBS()
 		{
 			binaryReader.Seek(24);
 			const unsigned int size = binaryReader.Read<unsigned int>();
-			binaryReader.Seek(binaryReader.GetPosition() - 4 + size);
-			while (true)
+			unsigned int seekPos = static_cast<unsigned int>(binaryReader.GetPosition()) - 4 + size;
+			if (seekPos >= resourceDataSize)
+			{
+				return static_cast<unsigned int>(-1);
+			}
+			binaryReader.Seek(seekPos);
+			while (binaryReader.GetPosition() < binaryReader.GetSize())
 			{
 				if (binaryReader.Read<unsigned char>() == 'F')
 				{
-					binaryReader.Seek(binaryReader.GetPosition() - 1);
-					magic = binaryReader.Read<unsigned int>();
-					if (magic == '5BSF')
+					if (binaryReader.GetPosition() + 3 <= binaryReader.GetSize())
 					{
-						break;
+						binaryReader.Seek(binaryReader.GetPosition() - 1);
+						magic = binaryReader.Read<unsigned int>();
+						if (magic == '5BSF')
+						{
+							offset = static_cast<unsigned int>(binaryReader.GetPosition()) - 4;
+							break;
+						}
 					}
 				}
 			}
-			offset = static_cast<unsigned int>(binaryReader.GetPosition()) - 4;
 		}
 	}
 	return offset;
