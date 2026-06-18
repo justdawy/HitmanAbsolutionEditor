@@ -121,6 +121,7 @@ void SceneDocument::RenderMenuBar()
         {
             if (ImGui::MenuItem(settingsLabel.c_str()))
             {
+                Editor::GetInstance().SetShowSettingsWindow(true);
             }
 
             if (ImGui::MenuItem(ICON_MDI_RESTORE " Restore Backups"))

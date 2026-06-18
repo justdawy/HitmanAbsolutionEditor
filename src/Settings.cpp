@@ -17,6 +17,14 @@ Settings& Settings::GetInstance()
 void Settings::LoadSettings()
 {
     GetValueFromIniFile("Settings", "RuntimeFolderPath", runtimeFolderPath);
+    
+    std::string rpcValue;
+    GetValueFromIniFile("Settings", "EnableDiscordRPC", rpcValue);
+    if (!rpcValue.empty()) {
+        enableDiscordRPC = (rpcValue == "1" || rpcValue == "true");
+    }
+
+    GetValueFromIniFile("Settings", "BackgroundImagePath", backgroundImagePath);
 }
 
 const bool Settings::IniFileHasKey(const std::string& section, const std::string& key)
@@ -85,4 +93,24 @@ const std::string Settings::GetRuntimeFolderPath() const
 void Settings::SetRuntimeFolderPath(const std::string& runtimeFolderPath)
 {
 	this->runtimeFolderPath = runtimeFolderPath;
+}
+
+const bool Settings::GetEnableDiscordRPC() const
+{
+	return enableDiscordRPC;
+}
+
+void Settings::SetEnableDiscordRPC(const bool enableDiscordRPC)
+{
+	this->enableDiscordRPC = enableDiscordRPC;
+}
+
+const std::string Settings::GetBackgroundImagePath() const
+{
+	return backgroundImagePath;
+}
+
+void Settings::SetBackgroundImagePath(const std::string& backgroundImagePath)
+{
+	this->backgroundImagePath = backgroundImagePath;
 }

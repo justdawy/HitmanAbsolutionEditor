@@ -4,8 +4,12 @@
 #include <IconsMaterialDesignIcons.h>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
+#include <thread>
+#include <chrono>
 
-#include "ImGuizmo.h"
+#include <WICTextureLoader.h>
+#include <Utility/StringUtility.h>
 #include <discord_rpc.h>
 
 #include "Connection/PipeClient.h"
@@ -142,6 +146,11 @@ void Editor::Start() {
 
   bool quit = false;
 
+  Settings& settings = Settings::GetInstance();
+  if (!settings.GetBackgroundImagePath().empty()) {
+      LoadBackgroundImage(settings.GetBackgroundImagePath());
+  }
+
   while (true) {
     Timer::Tick();
 
@@ -226,15 +235,227 @@ void Editor::RenderContent() {
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+  
+  if (backgroundTextureSRV) {
+      ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
+  }
 
   ImGui::Begin("###DocumentRoot", nullptr, windowFlags);
   ImGui::PopStyleVar(3);
+  if (backgroundTextureSRV) {
+      ImGui::PopStyleColor();
+  }
 
   ImGuiID rootDockspaceID = ImGui::GetID("RootDockspace");
-  ImGui::DockSpace(rootDockspaceID, ImVec2(0, 0),
-                   ImGuiDockNodeFlags_NoCloseButton |
-                       ImGuiDockNodeFlags_NoSplit,
-                   &topLevelEditorWindowClass);
+  
+  ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_NoCloseButton | ImGuiDockNodeFlags_NoSplit;
+  if (backgroundTextureSRV) {
+      dockspaceFlags |= ImGuiDockNodeFlags_PassthruCentralNode;
+  }
+
+  ImGui::DockSpace(rootDockspaceID, ImVec2(0, 0), dockspaceFlags, &topLevelEditorWindowClass);
+
+  if (backgroundTextureSRV) {
+      ImGui::GetBackgroundDrawList()->AddImage((void*)backgroundTextureSRV, viewport->Pos, ImVec2(viewport->Pos.x + viewport->Size.x, viewport->Pos.y + viewport->Size.y), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255));
+      ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.5f;
+  } else {
+      ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 1.0f;
+  }
+
+  for (size_t i = 0; i < documents.size(); ++i) {
+    if (!*documents[i]->GetOpen()) {
+      continue;
+    }
+
+    const bool isLastFocusedDocument = lastActiveDocument == documents[i];
+
+    if (isLastFocusedDocument) {
+      documents[i]->RenderMenuBar();
+    }
+
+    UpdateDocumentLocation(documents[i], rootDockspaceID);
+  }
+
+  for (size_t i = 0; i < documents.size(); ++i) {
+    std::shared_ptr<Document> document = documents[i];
+
+    if (!*document->GetOpen()) {
+      if (lastActiveDocument == document) {
+        lastActiveDocument = nullptr;
+      }
+
+      documents.erase(documents.begin() + i);
+
+      i--;
+    } else {
+      UpdateDocumentContents(document);
+    }
+  }
+
+  Settings &settings = Settings::GetInstance();
+
+  if (settings.GetRuntimeFolderPath().empty()) {
+    ImGui::OpenPopup("Runtime Folder Path");
+  }
+
+  if (showSettingsWindow) {
+      ImGui::Begin("Settings", &showSettingsWindow);
+      
+      bool rpc = settings.GetEnableDiscordRPC();
+      if (ImGui::Checkbox("Discord RPC", &rpc)) {
+          settings.SetEnableDiscordRPC(rpc);
+          settings.UpdateIniFile("EnableDiscordRPC", rpc ? "1" : "0");
+      }
+
+      if (ImGui::Button("Background")) {
+          std::string path = FileDialog::OpenFile("Image Files (*.png;*.jpg;*.jpeg;*.bmp)\0*.png;*.jpg;*.jpeg;*.bmp\0All Files (*.*)\0*.*\0");
+          if (!path.empty()) {
+              settings.SetBackgroundImagePath(path);
+              settings.UpdateIniFile("BackgroundImagePath", path);
+              LoadBackgroundImage(path);
+          }
+      }
+
+      ImGui::End();
+  }
+
+  ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+
+  ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+  if (ImGui::BeginPopupModal("Runtime Folder Path", nullptr,
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
+    static std::string runtimeFolderPath;
+
+    ImGui::PushFont(Editor::GetInstance().GetImGuiRenderer()->GetMiddleFont());
+    ImGui::TextUnformatted("Runtime Folder Path");
+    ImGui::InputText("##RuntimeFolderPath", &runtimeFolderPath);
+    ImGui::SameLine();
+
+    if (ImGui::Button(ICON_MDI_FOLDER)) {
+      runtimeFolderPath = FileDialog::OpenFolder();
+    }
+
+    ImGui::Separator();
+
+    ImGui::SetItemDefaultFocus();
+
+    ImGui::BeginDisabled(runtimeFolderPath.empty());
+
+    if (ImGui::Button("Ok", ImVec2(120, 0))) {
+      settings.SetRuntimeFolderPath(runtimeFolderPath);
+      settings.UpdateIniFile("RuntimeFolderPath", runtimeFolderPath);
+
+      ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndDisabled();
+    ImGui::PopFont();
+
+    MSG msg;
+
+    while (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+
+      if (msg.message == WM_QUIT) {
+        quit = true;
+      }
+    }
+
+    if (quit) {
+      break;
+    }
+
+    if (resizeWidth != 0 && resizeHeight != 0) {
+      directXRenderer->GetSwapChain()->Resize(resizeWidth, resizeHeight);
+
+      resizeWidth = 0;
+      resizeHeight = 0;
+    }
+
+    UpdateDiscordPresence();
+    Discord_RunCallbacks();
+
+    Render();
+  }
+}
+
+void Editor::Render() {
+  ImGuiIO &io = ImGui::GetIO();
+  (void)io;
+
+  // Start the Dear ImGui frame
+  ImGui_ImplDX11_NewFrame();
+  ImGui_ImplWin32_NewFrame();
+  ImGui::NewFrame();
+
+  RenderContent();
+
+  // Rendering
+  ImGui::Render();
+
+  directXRenderer->ClearBackBuffer();
+  directXRenderer->SetBackBufferAsRenderTarget();
+
+  ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+  // Update and Render additional Platform Windows
+  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
+  }
+
+  directXRenderer->GetSwapChain()->Present();
+}
+
+void Editor::RenderContent() {
+  // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window
+  // not dockable into, because it would be confusing to have two docking
+  // targets within each others.
+  ImGuiWindowFlags windowFlags =
+      ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+
+  windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+  windowFlags |=
+      ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+  ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+  ImGui::SetNextWindowPos(viewport->Pos);
+  ImGui::SetNextWindowViewport(viewport->ID);
+  ImGui::SetNextWindowSize(viewport->Size);
+
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+  
+  if (backgroundTextureSRV) {
+      ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
+  }
+
+  ImGui::Begin("###DocumentRoot", nullptr, windowFlags);
+  ImGui::PopStyleVar(3);
+  if (backgroundTextureSRV) {
+      ImGui::PopStyleColor();
+  }
+
+  ImGuiID rootDockspaceID = ImGui::GetID("RootDockspace");
+  
+  ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_NoCloseButton | ImGuiDockNodeFlags_NoSplit;
+  if (backgroundTextureSRV) {
+      dockspaceFlags |= ImGuiDockNodeFlags_PassthruCentralNode;
+  }
+
+  ImGui::DockSpace(rootDockspaceID, ImVec2(0, 0), dockspaceFlags, &topLevelEditorWindowClass);
+
+  if (backgroundTextureSRV) {
+      ImGui::GetBackgroundDrawList()->AddImage((void*)backgroundTextureSRV, viewport->Pos, ImVec2(viewport->Pos.x + viewport->Size.x, viewport->Pos.y + viewport->Size.y), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255));
+      ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.5f;
+  } else {
+      ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 1.0f;
+  }
 
   for (size_t i = 0; i < documents.size(); ++i) {
     if (!*documents[i]->GetOpen()) {
@@ -309,11 +530,26 @@ void Editor::RenderContent() {
   }
 
   ImGui::End();
-}
 
-LRESULT Editor::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  if (SceneViewportPanel::IsWindowHovered() && msg == WM_MOUSEMOVE) {
-    SceneViewportPanel::OnMouseMove();
+  if (showSettingsWindow) {
+      ImGui::Begin("Settings", &showSettingsWindow);
+      
+      bool rpc = settings.GetEnableDiscordRPC();
+      if (ImGui::Checkbox("Discord RPC", &rpc)) {
+          settings.SetEnableDiscordRPC(rpc);
+          settings.UpdateIniFile("EnableDiscordRPC", rpc ? "1" : "0");
+      }
+
+      if (ImGui::Button("Background")) {
+          std::string path = FileDialog::OpenFile("Image Files (*.png;*.jpg;*.jpeg;*.bmp)\0*.png;*.jpg;*.jpeg;*.bmp\0All Files (*.*)\0*.*\0");
+          if (!path.empty()) {
+              settings.SetBackgroundImagePath(path);
+              settings.UpdateIniFile("BackgroundImagePath", path);
+              LoadBackgroundImage(path);
+          }
+      }
+
+      ImGui::End();
   }
 
   if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam)) {
@@ -402,6 +638,11 @@ static const char* GetDocumentExtension(Document::Type type) {
 }
 
 void Editor::UpdateDiscordPresence() {
+  if (!Settings::GetInstance().GetEnableDiscordRPC()) {
+      Discord_ClearPresence();
+      return;
+  }
+
   static std::shared_ptr<Document> cachedActiveDocument = nullptr;
   static int64_t startTimestamp = std::time(nullptr);
   static size_t numDocuments = -1;
@@ -690,4 +931,33 @@ void Editor::UpdateDocumentContents(std::shared_ptr<Document> document) {
   const bool isLastFocusedDocument = lastActiveDocument == document;
 
   document->RenderPanels(isLastFocusedDocument);
+}
+
+void Editor::SetShowSettingsWindow(bool show) {
+    showSettingsWindow = show;
+}
+
+void Editor::LoadBackgroundImage(const std::string& path) {
+    if (backgroundTextureSRV) {
+        backgroundTextureSRV->Release();
+        backgroundTextureSRV = nullptr;
+    }
+
+    std::wstring wpath = StringUtility::AnsiStringToWideString(path);
+    ID3D11Resource* texture = nullptr;
+    HRESULT hr = DirectX::CreateWICTextureFromFile(
+        directXRenderer->GetD3D11Device(),
+        directXRenderer->GetD3D11DeviceContext(),
+        wpath.c_str(),
+        &texture,
+        &backgroundTextureSRV
+    );
+
+    if (FAILED(hr)) {
+        Logger::GetInstance().Log(Logger::Level::Error, "Failed to load background image.");
+    }
+    
+    if (texture) {
+        texture->Release();
+    }
 }

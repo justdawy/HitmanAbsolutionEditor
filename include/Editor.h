@@ -33,6 +33,8 @@ public:
 	void UpdateDocumentContents(std::shared_ptr<Document> document);
 
 	void UpdateDiscordPresence();
+	void LoadBackgroundImage(const std::string& path);
+	void SetShowSettingsWindow(bool show);
 
 private:
 	Editor();
@@ -51,4 +53,7 @@ private:
 	std::shared_ptr<Document> lastActiveDocument;
 	ImGuiWindowClass topLevelEditorWindowClass;
 	bool floatingToolsOnlyVisibleWhenParentIsFocused;
+
+	ID3D11ShaderResourceView* backgroundTextureSRV = nullptr;
+	bool showSettingsWindow = false;
 };
