@@ -1,8 +1,6 @@
 #pragma once
-
 #include "Component.h"
 #include "Mesh.h"
-
 class BulletCollision : public Component
 {
 public:
@@ -11,7 +9,6 @@ public:
 	void Render() override;
 	void RenderProperties() override;
 	void CreateBoxMesh(const Vector3& position, const Vector3& scale, std::shared_ptr<Mesh> boxMesh);
-
 private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 };

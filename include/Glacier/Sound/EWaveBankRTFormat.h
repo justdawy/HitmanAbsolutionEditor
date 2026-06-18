@@ -1,5 +1,4 @@
 #pragma once
-
 enum EWaveBankRTFormat
 {
 	WAVEBANKRT_FORMAT_DEFAULT = 0,

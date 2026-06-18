@@ -1,5 +1,4 @@
 #include "Glacier/BoneRig/SBoneConstraint.h"
-
 std::string SBoneConstraint::ConvertTypeToString(const EBoneConstrainType boneConstrainType)
 {
 	switch (boneConstrainType)

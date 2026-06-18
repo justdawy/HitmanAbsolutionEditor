@@ -1,7 +1,5 @@
 #pragma once
-
 #include <chrono>
-
 class Timer
 {
 public:
@@ -9,7 +7,6 @@ public:
 	static void Tick();
 	static const double GetDeltaTime();
 	static void SetFPSLimit();
-
 private:
 	inline static double deltaTimeMs;
 	inline static std::chrono::high_resolution_clock::time_point startSleepTime;

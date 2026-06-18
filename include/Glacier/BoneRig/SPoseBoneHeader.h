@@ -1,11 +1,8 @@
 #pragma once
-
 #include "rapidjson/prettywriter.h"
-
 struct SPoseBoneHeader
 {
 	void SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer);
-
 	unsigned int m_nPoseBoneArrayOffset;
 	unsigned int m_nPoseBoneIndeArrayOffset;
 	int m_nPoseBoneCountTotal;

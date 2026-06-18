@@ -1,8 +1,6 @@
 #pragma once
-
 #include <string>
 #include <vector>
-
 #include "Glacier/BoneRig/SBoneRig.h"
 #include "Glacier/BoneRig/SBoneDefinition.h"
 #include "Glacier/BoneRig/SBoneConstraintsHeader.h"
@@ -13,9 +11,7 @@
 #include "Glacier/Math/SQV.h"
 #include "Glacier/Math/SMatrix43.h"
 #include "Glacier/Math/SMatrix44.h"
-
 #include "Resources/Resource.h"
-
 class BoneRig : public Resource
 {
 public:
@@ -39,7 +35,6 @@ public:
 	const std::vector<SMatrix44>& GetBindPoseInverseGlobalMatrices() const;
 	std::vector<SMatrix44>& GetBindPoseInverseGlobalMatrices();
 	void SerializeToJson(const std::string& outputFilePath);
-
 private:
 	SBoneRig boneRig;
 	std::vector<SBoneDefinition> boneDefinitions;

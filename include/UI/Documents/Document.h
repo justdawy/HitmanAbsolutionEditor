@@ -1,16 +1,11 @@
 #pragma once
-
 #include <vector>
 #include <memory>
-
 #include "imgui.h"
 #include "imgui_internal.h"
-
 #include "UI/Panels/BasePanel.h"
-
 #define EDITOR_CONFIG_SAME_LOCATION_SHARE_LAYOUT              0
-#define EDITOR_CONFIG_ONMERGE_OVERWRITE_WITH_SOURCE_LAYOUT    0 // Keep source (dragged) layout, vs keep target layout. Later seems to make more sense.
-
+#define EDITOR_CONFIG_ONMERGE_OVERWRITE_WITH_SOURCE_LAYOUT    0
 class Document
 {
 public:
@@ -43,7 +38,6 @@ public:
         SoundDefinitions,
         RenderPrimitive
     };
-
     Document(const char* name, const char* icon, const Type type, const unsigned long long runtimeResourceID = -1, const bool hasToolBar = false, const ImGuiID dockID = 0);
     virtual ~Document() = default;
     const char* GetName() const;
@@ -75,19 +69,15 @@ public:
     std::string CalculatePanelID(const int index, const ImGuiID dockspaceID) const;
     void AddPanel(std::shared_ptr<BasePanel> panel);
     const bool HasToolBar() const;
-
     virtual void CreateLayout(const ImGuiID dockspaceID, const ImVec2 dockspaceSize)
     {
     }
-
     virtual void RenderMenuBar()
     {
     }
-
     virtual void RenderToolBar()
     {
     }
-
 protected:
     std::string name;
     std::string rawName;
@@ -97,14 +87,12 @@ protected:
     ImGuiID dockID;
     bool open;
     bool hasToolBar;
-
     ImGuiID currentDockID;
-    ImGuiID currentLocationID; // Current Dock node we are docked into _OR_ window ID if floating window
-    ImGuiID previousLocationID; // Previous dock node we are docked into _OR_ window ID if floating window
-    ImGuiID currentDockspaceID; // Dockspace ID ~~ Hash of LocationID + DocType (with EDITOR_CONFIG_SAME_LOCATION_SHARE_LAYOUT=1)
+    ImGuiID currentLocationID;
+    ImGuiID previousLocationID;
+    ImGuiID currentDockspaceID;
     ImGuiID previousDockspaceID;
-    ImGuiWindowClass toolWindowsClass; // All our tools windows will share the same WindowClass (based on ID) to avoid mixing tools from different top-level editor
-
+    ImGuiWindowClass toolWindowsClass;
     std::vector<std::shared_ptr<BasePanel>> panels;
     std::vector<bool> panelStates;
 };

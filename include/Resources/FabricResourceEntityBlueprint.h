@@ -1,9 +1,6 @@
 #pragma once
-
 #include <vector>
-
 #include "Resource.h"
-
 class FabricResourceEntityBlueprint : public Resource
 {
 public:
@@ -18,7 +15,6 @@ public:
 	std::vector<std::string>& GetClothPieceExtendedNames();
 	std::vector<std::string>& GetTransformNames();
 	std::vector<std::string>& GetStrandsNames();
-
 private:
 	enum class PropertyType
 	{
@@ -27,7 +23,6 @@ private:
 		Transform,
 		Strands
 	};
-
 	std::vector<std::string> clothPieceNames;
 	std::vector<std::string> clothPieceExtendedNames;
 	std::vector<std::string> transformNames;

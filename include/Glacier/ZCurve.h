@@ -1,10 +1,7 @@
 #pragma once
-
 #include "Containers/TArray.h"
 #include "Containers/TFixedArray.h"
-
 class ZBinarySerializer;
-
 class ZCurve
 {
 public:
@@ -14,7 +11,6 @@ public:
 	bool operator==(const ZCurve& other) const;
 	const TArray<TFixedArray<float, 8>>& GetData() const;
 	TArray<TFixedArray<float, 8>>& GetData();
-
 private:
 	TArray<TFixedArray<float, 8>> data;
 };

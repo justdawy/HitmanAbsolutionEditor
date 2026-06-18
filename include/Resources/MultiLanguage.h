@@ -1,7 +1,5 @@
 #pragma once
-
 #include "Resource.h"
-
 class MultiLanguage : public Resource
 {
 public:
@@ -14,7 +12,6 @@ public:
 	void ImportFromJson(const std::string& jsonFilePath);
 	bool SerializeToBinary(std::vector<unsigned char>& outputBuffer);
 	bool PatchResourceLibrary();
-
 private:
 	char localizationCategory;
 	std::vector<int> indices;

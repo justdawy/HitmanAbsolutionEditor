@@ -1,22 +1,16 @@
 #include "Glacier/Material/SRMaterialProperties.h"
 #include "Glacier/Material/RENDER_PRIMITIVE_INSTANCE_FLAGS.h"
 #include "Resources/Resource.h"
-
 void SRMaterialProperties::SerializeToJson(const std::string& materialClassType, std::vector<std::shared_ptr<Resource>>& references, rapidjson::Document& document)
 {
 	rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
 	rapidjson::Value materialInfoObject;
-
 	materialInfoObject.SetObject();
-
 	materialInfoObject.AddMember("materialClassType", rapidjson::Value(materialClassType.c_str(), allocator).Move(), allocator);
 	materialInfoObject.AddMember("materialEffectResourceID", rapidjson::Value(references[lMaterialEffectIndex]->GetResourceID().c_str(), allocator).Move(), allocator);
-
 	const MATERIAL_FLAGS materialFlags = static_cast<MATERIAL_FLAGS>(lMaterialClassFlags);
 	rapidjson::Value materialClassFlagsObject;
-
 	materialClassFlagsObject.SetObject();
-
 	materialClassFlagsObject.AddMember("MF_REFLECTION2D", (materialFlags & MATERIAL_FLAGS::MF_REFLECTION2D) == MATERIAL_FLAGS::MF_REFLECTION2D, allocator);
 	materialClassFlagsObject.AddMember("MF_REFRACTION2D", (materialFlags & MATERIAL_FLAGS::MF_REFRACTION2D) == MATERIAL_FLAGS::MF_REFRACTION2D, allocator);
 	materialClassFlagsObject.AddMember("MF_LIGHTING", (materialFlags & MATERIAL_FLAGS::MF_LIGHTING) == MATERIAL_FLAGS::MF_LIGHTING, allocator);
@@ -33,12 +27,9 @@ void SRMaterialProperties::SerializeToJson(const std::string& materialClassType,
 	materialClassFlagsObject.AddMember("MF_ALPHA", (materialFlags & MATERIAL_FLAGS::MF_ALPHA) == MATERIAL_FLAGS::MF_ALPHA, allocator);
 	materialClassFlagsObject.AddMember("MF_USES_SIMPLE_SHADER", (materialFlags & MATERIAL_FLAGS::MF_USES_SIMPLE_SHADER) == MATERIAL_FLAGS::MF_USES_SIMPLE_SHADER, allocator);
 	materialInfoObject.AddMember("materialClassFlags", materialClassFlagsObject, allocator);
-
 	const RENDER_PRIMITIVE_INSTANCE_FLAGS renderPrimitiveInstanceFlags = static_cast<RENDER_PRIMITIVE_INSTANCE_FLAGS>(lTransparencyFlags);
 	rapidjson::Value transparencyFlagsObject;
-
 	transparencyFlagsObject.SetObject();
-
 	transparencyFlagsObject.AddMember("TF_OPAQUE_EMISSIVE", (renderPrimitiveInstanceFlags & RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_OPAQUE_EMISSIVE) == RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_OPAQUE_EMISSIVE, allocator);
 	transparencyFlagsObject.AddMember("TF_TRANS_EMISSIVE", (renderPrimitiveInstanceFlags & RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_TRANS_EMISSIVE) == RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_TRANS_EMISSIVE, allocator);
 	transparencyFlagsObject.AddMember("TF_TRANSADD_EMISSIVE", (renderPrimitiveInstanceFlags & RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_TRANSADD_EMISSIVE) == RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_TRANSADD_EMISSIVE, allocator);
@@ -51,10 +42,8 @@ void SRMaterialProperties::SerializeToJson(const std::string& materialClassType,
 	transparencyFlagsObject.AddMember("TF_DISABLE_SHADER_LOD", (renderPrimitiveInstanceFlags & RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_DISABLE_SHADER_LOD) == RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_DISABLE_SHADER_LOD, allocator);
 	transparencyFlagsObject.AddMember("TF_DISCARD", (renderPrimitiveInstanceFlags & RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_DISCARD) == RENDER_PRIMITIVE_INSTANCE_FLAGS::TF_DISCARD, allocator);
 	materialInfoObject.AddMember("transparencyFlags", transparencyFlagsObject, allocator);
-
 	materialInfoObject.AddMember("materialDescriptor", lMaterialDescriptor, allocator);
 	materialInfoObject.AddMember("impactMaterial", lImpactMaterial, allocator);
 	materialInfoObject.AddMember("effectResource", lEffectResource, allocator);
-
 	document.AddMember("materialInfo", materialInfoObject, allocator);
 }

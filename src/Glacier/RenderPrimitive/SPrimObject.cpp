@@ -1,5 +1,4 @@
 #include "Glacier/RenderPrimitive/SPrimObject.h"
-
 std::string SPrimObject::ConvertSubTypeToString(const SUBTYPE subType)
 {
 	switch (subType)

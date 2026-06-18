@@ -1,7 +1,5 @@
 #pragma once
-
 #include "Resource.h"
-
 class Composition : public Resource
 {
 public:

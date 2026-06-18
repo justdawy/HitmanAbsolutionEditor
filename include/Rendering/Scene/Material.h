@@ -1,11 +1,8 @@
 #pragma once
-
 #include <string>
 #include <vector>
 #include <unordered_map>
-
 #include "../RenderTexture.h"
-
 class Material
 {
 public:
@@ -17,7 +14,6 @@ public:
 		Emissive,
 		Alpha
 	};
-
 	Material() = default;
 	Material(const std::string& name);
 	Material(const std::string& name, const std::vector<RenderMaterialInstance::Texture>& textures);
@@ -29,7 +25,6 @@ public:
 	const bool HasSpecularTexture() const;
 	const bool HasEmissiveTexture() const;
 	const bool HasAlphaTexture() const;
-
 private:
 	std::string name;
 	std::unordered_map<TextureType, std::shared_ptr<RenderTexture>> textures;

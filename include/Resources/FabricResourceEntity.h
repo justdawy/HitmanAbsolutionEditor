@@ -1,12 +1,8 @@
 #pragma once
-
 #include <vector>
-
 #include "Glacier/Cloth/ZFabricResourceEntity.h"
-
 #include "Resource.h"
 #include "Resources/FabricResourceEntityBlueprint.h"
-
 class FabricResourceEntity : public Resource
 {
 public:
@@ -17,7 +13,6 @@ public:
 	std::vector<ZFabricResourceEntity::SAddedPropertyValues::SClothPieceExtendedPropertySet>& GetClothPieceExtendedPropertySets();
 	std::vector<ZFabricResourceEntity::SAddedPropertyValues::STransformPropertySet>& GetTransformPropertySets();
 	std::vector<ZFabricResourceEntity::SAddedPropertyValues::SStrandsPropertySet>& GetStrandsPropertySets();
-
 private:
 	enum class PropertyType
 	{
@@ -26,7 +21,6 @@ private:
 		Transform,
 		Strands
 	};
-
 	std::vector<ZFabricResourceEntity::SAddedPropertyValues::SClothPiecePropertySet> clothPiecePropertySets;
 	std::vector<ZFabricResourceEntity::SAddedPropertyValues::SClothPieceExtendedPropertySet> clothPieceExtendedPropertySets;
 	std::vector<ZFabricResourceEntity::SAddedPropertyValues::STransformPropertySet> transformPropertySets;

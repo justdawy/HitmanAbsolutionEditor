@@ -1,8 +1,6 @@
 #pragma once
-
 #include "../ZString.h"
 #include "../Containers/TArray.h"
-
 struct SGfxResource
 {
 	ZString movieName;

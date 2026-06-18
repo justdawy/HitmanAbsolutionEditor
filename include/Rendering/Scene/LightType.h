@@ -1,5 +1,4 @@
 #pragma once
-
 enum class LightType
 {
     Ambient = 0,

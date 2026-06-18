@@ -1,7 +1,5 @@
 #pragma once
-
 #include "WaveBankFSB.h"
-
 class WaveBankFSBM : public WaveBankFSB
 {
 public:

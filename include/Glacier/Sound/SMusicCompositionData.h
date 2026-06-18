@@ -1,11 +1,8 @@
 #pragma once
-
 #include <string>
-
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
-
 #include "../Containers/TArray.h"
 #include "SMusicGameCueData.h"
 #include "SMusicPlaylistData.h"
@@ -14,11 +11,9 @@
 #include "SMusicPlaylistEndBehavior.h"
 #include "SMusicTransition.h"
 #include "SMusicTrackExposingGroupData.h"
-
 struct SMusicCompositionData
 {
 	void SerializeToJson(const std::string& outputFilePath);
-
 	TArray<SMusicGameCueData> m_aGameCues;
 	TArray<SMusicPlaylistData> m_aPlaylists;
 	TArray<SMusicStingerData> m_aStingers;

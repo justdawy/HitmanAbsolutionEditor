@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ECollisionPack
 {
 	ECOLLISIONPACK_VOID = 0,
@@ -11,7 +10,6 @@ enum class ECollisionPack
 	ECOLLISIONPACK_ALL = 2147483646,
 	ECOLLISIONPACK_AUTO = 2147483647
 };
-
 inline ECollisionPack operator&(ECollisionPack lhs, ECollisionPack rhs)
 {
 	return static_cast<ECollisionPack>(static_cast<int>(lhs) & static_cast<int>(rhs));

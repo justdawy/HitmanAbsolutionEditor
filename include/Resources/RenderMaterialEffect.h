@@ -1,9 +1,6 @@
 #pragma once
-
 #include <Effects11/d3dx11effect.h>
-
 #include "Resource.h"
-
 class RenderMaterialEffect : public Resource
 {
 public:
@@ -13,7 +10,6 @@ public:
 		std::vector<std::string> passes;
 		std::vector<std::string> annotations;
 	};
-
 	struct Shader
 	{
 		std::string name;
@@ -21,7 +17,6 @@ public:
 		unsigned int byteCodeLength;
 		std::string hlslCode;
 	};
-
 	~RenderMaterialEffect() override;
 	void Deserialize() override;
 	void Export(const std::string& outputPath, const std::string& exportOption) override;
@@ -35,7 +30,6 @@ public:
 	std::vector<Shader>& GetShaders();
 	void AddShader(const D3DX11_PASS_SHADER_DESC& passShaderDesc, const std::string& techniqueName, const std::string& shaderType);
 	void SerializeToJson(const std::string& outputFilePath);
-
 private:
 	ID3DX11Effect* compiledEffect;
 	std::vector<std::string> constantBufferNames;

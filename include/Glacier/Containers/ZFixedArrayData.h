@@ -1,5 +1,4 @@
 #pragma once
-
 template <typename TElement, int TSize>
 struct ZFixedArrayData
 {

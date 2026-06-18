@@ -1,20 +1,9 @@
 #include "Math/LinearColor.h"
-
-// fast Linear to SRGB unsigned char conversion
-// https://gist.github.com/rygorous/2203834
-//
-// round-trips exactly
-// quantization bucket boundaries vary by max of 0.11%
-// biggest difference at i = 1
-// thresholds[i] = 0.000456
-// c_linear_float_srgb_thresholds[i] = 0.000455
-
 typedef union
 {
     unsigned int u;
     float f;
 } stbir__FP32;
-
 static const unsigned int stb_fp32_to_srgb8_tab4[104] = {
     0x0073000d, 0x007a000d, 0x0080000d, 0x0087000d, 0x008d000d, 0x0094000d, 0x009a000d, 0x00a1000d,
     0x00a7001a, 0x00b4001a, 0x00c1001a, 0x00ce001a, 0x00da001a, 0x00e7001a, 0x00f4001a, 0x0101001a,
@@ -30,33 +19,23 @@ static const unsigned int stb_fp32_to_srgb8_tab4[104] = {
     0x44c20798, 0x488e071e, 0x4c1c06b6, 0x4f76065d, 0x52a50610, 0x55ac05cc, 0x5892058f, 0x5b590559,
     0x5e0c0a23, 0x631c0980, 0x67db08f6, 0x6c55087f, 0x70940818, 0x74a007bd, 0x787d076c, 0x7c330723,
 };
-
 static unsigned char stbir__linear_to_srgb_uchar_fast(float in)
 {
-    static const stbir__FP32 almostone = { 0x3f7fffff }; // 1-eps
+    static const stbir__FP32 almostone = { 0x3f7fffff };
     static const stbir__FP32 minval = { (127 - 13) << 23 };
     unsigned int tab, bias, scale, t;
     stbir__FP32 f;
-
-    // Clamp to [2^(-13), 1-eps]; these two values map to 0 and 1, respectively.
-    // The tests are carefully written so that NaNs map to 0, same as in the reference
-    // implementation.
-    if (!(in > minval.f)) // written this way to catch NaNs
+    if (!(in > minval.f))
         in = minval.f;
     if (in > almostone.f)
         in = almostone.f;
-
-    // Do the table lookup and unpack bias, scale
     f.f = in;
     tab = stb_fp32_to_srgb8_tab4[(f.u - minval.u) >> 20];
     bias = (tab >> 16) << 9;
     scale = tab & 0xffff;
-
-    // Grab next-highest mantissa bits and perform linear interpolation
     t = (f.u >> 12) & 0xff;
     return (unsigned char)((bias + scale * t) >> 16);
 }
-
 LinearColor::LinearColor(const Color& Color)
     : r(sRGBToLinearTable[Color.r])
     , g(sRGBToLinearTable[Color.g])
@@ -64,29 +43,23 @@ LinearColor::LinearColor(const Color& Color)
     , a(static_cast<float>(Color.a)* (1.0f / 255.0f))
 {
 }
-
 LinearColor::LinearColor(const float r, const float g, const float b, const float a) : r(r), g(g), b(b), a(a)
 {
 }
-
 const float* LinearColor::Data() const
 {
 	return &r;
 }
-
 const bool LinearColor::operator==(const LinearColor& rhs) const
 {
 	return r == rhs.r && g == rhs.g && b == rhs.b && a == rhs.a;
 }
-
 const bool LinearColor::operator!=(const LinearColor& rhs) const
 {
 	return !(*this == rhs);
 }
-
 Color LinearColor::QuantizeRound() const
 {
-    // Avoid FMath::RoundToInt because it calls floor()
     return Color(
         (unsigned char)(0.5f + Clamp01NansTo0(r) * 255.f),
         (unsigned char)(0.5f + Clamp01NansTo0(g) * 255.f),
@@ -94,14 +67,8 @@ Color LinearColor::QuantizeRound() const
         (unsigned char)(0.5f + Clamp01NansTo0(a) * 255.f)
     );
 }
-
-/** Quantizes the linear color and returns the result as a FColor with optional sRGB conversion and quality as goal. */
 Color LinearColor::ToFColorSRGB() const
 {
-	// The convention used here in all channels is that NaNs
-	// convert to 0, as do negative values, and out-of-range
-	// positive values convert to 255.
-
 #if PLATFORM_CPU_X86_FAMILY && PLATFORM_ENABLE_VECTORINTRINSICS
 	return ConvertLinearToSRGBSSE2(*this);
 #else
@@ -113,7 +80,6 @@ Color LinearColor::ToFColorSRGB() const
 	);
 #endif
 }
-
 Color LinearColor::ToColor(const bool sRGB) const
 {
 	if (sRGB)
@@ -125,20 +91,11 @@ Color LinearColor::ToColor(const bool sRGB) const
 		return QuantizeRound();
 	}
 }
-
 float LinearColor::Clamp01NansTo0(const float InValue)
 {
-    // Write this explicitly instead of using FMath::Clamp because we're particular
-    // about what happens with NaNs here.
-    const float ClampedLo = (InValue > 0.0f) ? InValue : 0.0f; // Also turns NaNs into 0.
+    const float ClampedLo = (InValue > 0.0f) ? InValue : 0.0f;
     return (ClampedLo < 1.0f) ? ClampedLo : 1.0f;
 }
-
-/**
-* Table for fast FColor -> FLinearColor conversion.
-*
-* Color > 0.04045 ? pow( Color * (1.0 / 1.055) + 0.0521327, 2.4 ) : Color * (1.0 / 12.92);
-*/
 float LinearColor::sRGBToLinearTable[256] =
 {
 	0.0f,

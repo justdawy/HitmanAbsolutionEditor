@@ -1,8 +1,6 @@
 #pragma once
-
 #include "Document.h"
 #include "Resources/RenderMaterialEntityType.h"
-
 class RenderMaterialEntityTypeDocument : public Document
 {
 public:
@@ -10,9 +8,7 @@ public:
 	void CreateLayout(const ImGuiID dockspaceID, const ImVec2 dockspaceSize) override;
 	std::shared_ptr<RenderMaterialEntityType> GetRenderMaterialEntityType() const;
 	void RenderMenuBar() override;
-
 private:
 	void OnResourceLoaded();
-
 	std::shared_ptr<RenderMaterialEntityType> renderMaterialEntityType;
 };

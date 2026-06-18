@@ -1,9 +1,7 @@
 #pragma once
-
 #include <d3d11.h>
 #include "BasePanel.h"
 #include <fstream>
-
 class SceneViewportPanel : public BasePanel
 {
 public:
@@ -15,7 +13,6 @@ public:
 	static void RestoreBlendState(const ImDrawList* drawList, const ImDrawCmd* cmd);
 	static bool IsWindowHovered();
 	static void OnMouseMove();
-
 private:
 	HWND engineHWND;
 	HANDLE sharedHandle;
@@ -23,7 +20,6 @@ private:
 	ID3D11ShaderResourceView* shaderResourceView;
 	float width;
 	float height;
-
 	inline static ID3D11BlendState* originalBlendState;
 	inline static float originalBlendFactor[4];
 	inline static unsigned int originalSampleMask;

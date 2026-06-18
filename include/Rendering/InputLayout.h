@@ -1,12 +1,9 @@
 #pragma once
-
 #include <vector>
 #include <d3d11.h>
-
 #include "VertexType.h"
 #include "VertexAttribute.h"
 #include "Vertex.h"
-
 class InputLayout
 {
 public:
@@ -19,10 +16,8 @@ public:
     ID3D11InputLayout* GetInputLayout() const;
     bool operator==(const InputLayout& rhs) const;
     void Create(const VertexType vertexType, void* vertexShaderBlob = nullptr);
-
 private:
     bool CreateResource(void* vertexShaderBlob);
-
     VertexType vertexType;
     unsigned int vertexSize;
     std::vector<VertexAttribute> vertexAttributes;

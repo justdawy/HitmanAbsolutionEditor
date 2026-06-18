@@ -1,9 +1,6 @@
 #pragma once
-
 #include <Glacier/Sound/SMusicCompositionData.h>
-
 #include "Resource.h"
-
 class CompositionBlueprint : public Resource
 {
 public:
@@ -18,7 +15,6 @@ public:
 	void ParseTransitionMap(void* musicCompositionData);
 	void ParseTrackExposingGroups(void* musicCompositionData);
 	std::shared_ptr<SMusicCompositionData> GetMusicCompositionData();
-
 private:
 	std::shared_ptr<SMusicCompositionData> musicCompositionData;
 };

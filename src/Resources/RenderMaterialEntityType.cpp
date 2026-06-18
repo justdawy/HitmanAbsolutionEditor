@@ -2,31 +2,24 @@
 #include "Glacier/SColorRGBA.h"
 #include "Glacier/Math/SVector2.h"
 #include "Glacier/Math/SVector4.h"
-
 #include "Resources/RenderMaterialEntityType.h"
 #include "Resources/RenderMaterialEntityBlueprint.h"
 #include "Registry/ResourceInfoRegistry.h"
-
 RenderMaterialEntityType::Modifier::Modifier()
 {
 	value = nullptr;
 }
-
 RenderMaterialEntityType::Modifier::~Modifier()
 {
 	operator delete(value);
 }
-
 void RenderMaterialEntityType::Deserialize()
 {
 	BinaryReader binaryReader = BinaryReader(resourceData, resourceDataSize);
-
 	while (binaryReader.GetPosition() < binaryReader.GetSize())
 	{
 		std::shared_ptr<Modifier> modifier = std::make_shared<Modifier>();
-
 		modifier->type = static_cast<ModifierType>(binaryReader.Read<unsigned char>());
-
 		switch (modifier->type)
 		{
 			case ModifierType::UInt:
@@ -51,13 +44,10 @@ void RenderMaterialEntityType::Deserialize()
 				modifier->value = binaryReader.Read<void>(sizeof(SVector4));
 				break;
 		}
-
 		modifiers.push_back(modifier);
 	}
-
 	isResourceDeserialized = true;
 }
-
 void RenderMaterialEntityType::Export(const std::string& outputPath, const std::string& exportOption)
 {
 	if (exportOption.starts_with("Raw"))
@@ -69,51 +59,38 @@ void RenderMaterialEntityType::Export(const std::string& outputPath, const std::
 		SerializeToJson(outputPath);
 	}
 }
-
 void RenderMaterialEntityType::SerializeToJson(const std::string& outputFilePath)
 {
 	std::shared_ptr<RenderMaterialEntityBlueprint> renderMaterialEntityBlueprint;
 	std::vector<std::shared_ptr<Resource>>& clotReferences = GetReferences();
-
 	for (size_t i = 0; i < clotReferences.size(); ++i)
 	{
 		const ResourceInfoRegistry::ResourceInfo& referenceInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(clotReferences[i]->GetHash());
-
 		if (referenceInfo.type == "MATB")
 		{
 			renderMaterialEntityBlueprint = std::static_pointer_cast<RenderMaterialEntityBlueprint>(clotReferences[i]);
-
 			break;
 		}
 	}
-
 	const ResourceInfoRegistry::ResourceInfo& matbResourceInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(renderMaterialEntityBlueprint->GetHash());
-
 	renderMaterialEntityBlueprint->LoadResource(0, matbResourceInfo.headerLibraries[0].chunkIndex, matbResourceInfo.headerLibraries[0].indexInLibrary, false, false, true);
 	renderMaterialEntityBlueprint->Deserialize();
 	renderMaterialEntityBlueprint->DeleteResourceData();
-
 	rapidjson::StringBuffer stringBuffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(stringBuffer);
-
 	writer.StartObject();
-
 	writer.String("modifiers");
 	writer.StartObject();
-
 	const std::vector<std::shared_ptr<Resource>>& mattReferences = GetReferences();
 	const std::vector<std::shared_ptr<RenderMaterialEntityBlueprint::Modifier>>& matbModifiers = renderMaterialEntityBlueprint->GetModifiers();
-
 	for (size_t i = 0; i < modifiers.size(); ++i)
 	{
 		writer.String(matbModifiers[i]->name.c_str());
-
 		switch (modifiers[i]->type)
 		{
 			case ModifierType::UInt:
 			{
 				const unsigned int textureReferenceIndex = *static_cast<unsigned int*>(modifiers[i]->value);
-
 				if (textureReferenceIndex != -1)
 				{
 					writer.String(mattReferences[*static_cast<unsigned int*>(modifiers[i]->value)]->GetResourceID().c_str());
@@ -122,7 +99,6 @@ void RenderMaterialEntityType::SerializeToJson(const std::string& outputFilePath
 				{
 					writer.Uint(textureReferenceIndex);
 				}
-
 				break;
 			}
 			case ModifierType::SColorRGB:
@@ -145,18 +121,12 @@ void RenderMaterialEntityType::SerializeToJson(const std::string& outputFilePath
 				break;
 		}
 	}
-
 	writer.EndObject();
-
 	writer.EndObject();
-
 	std::ofstream outputFileStream = std::ofstream(outputFilePath);
-
 	outputFileStream << stringBuffer.GetString();
-
 	outputFileStream.close();
 }
-
 std::vector<std::shared_ptr<RenderMaterialEntityType::Modifier>>& RenderMaterialEntityType::GetModifiers()
 {
 	return modifiers;

@@ -1,8 +1,6 @@
 #pragma once
-
 #include "OutputFileStream.h"
 #include "OutputMemoryStream.h"
-
 class BinaryWriter
 {
 public:
@@ -14,7 +12,6 @@ public:
     void* GetBuffer() const;
     size_t GetPosition();
     size_t GetCapacity() const;
-
     template <typename T>
     void Write(const T& buffer)
     {
@@ -27,7 +24,6 @@ public:
             outputMemoryStream->Write<T>(buffer);
         }
     }
-
     template <typename T>
     void Write(T* buffer, const size_t size)
     {
@@ -40,12 +36,10 @@ public:
             outputMemoryStream->Write<T>(buffer, size);
         }
     }
-
     void WriteString(const std::string& string);
     void Skip(size_t count);
     void Seek(size_t offset, SeekOrigin seekOrigin = SeekOrigin::Begin);
     void AlignTo(const unsigned char alignment);
-
 private:
     OutputFileStream* outputFileStream;
     OutputMemoryStream* outputMemoryStream;

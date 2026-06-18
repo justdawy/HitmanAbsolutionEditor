@@ -1,5 +1,4 @@
 #pragma once
-
 struct BinaryBulkDataHeader
 {
 	enum EDataEndianness

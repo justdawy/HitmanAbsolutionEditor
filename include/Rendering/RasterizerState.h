@@ -1,7 +1,5 @@
 #pragma once
-
 #include <d3d11.h>
-
 class RasterizerState
 {
 public:
@@ -11,20 +9,17 @@ public:
         Wireframe,
         Solid
     };
-
     enum class CullMode
     {
         None,
         Clockwise,
         CounterClockwise,
     };
-
     enum class DepthClipMode : unsigned char
     {
         DepthClip,
         DepthClamp
     };
-
     RasterizerState() = default;
     RasterizerState(
         const FillMode fillMode = FillMode::Solid,
@@ -40,10 +35,8 @@ public:
     ID3D11RasterizerState* GetRasterizerState() const;
     static D3D11_FILL_MODE ConvertFillMode(const FillMode fillMode);
     static D3D11_CULL_MODE ConvertCullMode(const CullMode cullMode);
-
 private:
     void CreateResource();
-
     D3D11_FILL_MODE fillMode;
     D3D11_CULL_MODE cullMode;
     bool depthClipEnabled;

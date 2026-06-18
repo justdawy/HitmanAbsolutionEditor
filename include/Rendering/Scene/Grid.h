@@ -1,13 +1,8 @@
 #pragma once
-
 #include <DirectXMath.h>
-
 #include "imgui.h"
-
 #include "Component.h"
-
 class Renderer3D;
-
 class Grid : public Component
 {
 public:
@@ -16,7 +11,6 @@ public:
 	void Render() override;
 	void RenderProperties() override;
 	void SetRenderer3D(std::shared_ptr<Renderer3D> renderer3D);
-
 private:
 	float size;
 	std::unique_ptr<ImDrawList> drawList;

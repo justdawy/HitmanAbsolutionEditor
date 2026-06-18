@@ -1,9 +1,6 @@
 #pragma once
-
 #include <string>
-
 #include "imgui.h"
-
 class BasePanel
 {
 public:
@@ -18,7 +15,6 @@ public:
 	virtual void Render() = 0;
 	void SetID(const std::string& id);
 	void SetOpen(const bool open);
-
 protected:
 	std::string name;
 	const char* icon;

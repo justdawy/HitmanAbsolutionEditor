@@ -1,5 +1,4 @@
 #pragma once
-
 enum EMusicTransitionFadeType
 {
 	EMusicTransitionFadeType_None = 0,

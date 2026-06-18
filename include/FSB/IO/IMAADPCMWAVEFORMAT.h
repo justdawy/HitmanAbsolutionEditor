@@ -1,7 +1,5 @@
 #pragma once
-
 #include "WAVEFORMATEX.h"
-
 namespace FSB
 {
     namespace IO

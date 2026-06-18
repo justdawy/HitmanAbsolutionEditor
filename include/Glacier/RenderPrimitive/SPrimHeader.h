@@ -1,7 +1,5 @@
 #pragma once
-
 #include <string>
-
 struct SPrimHeader
 {
 	enum class EPrimType
@@ -13,9 +11,7 @@ struct SPrimHeader
 		PTSHAPE = 5,
 		PTUNUSED = 6
 	};
-
 	static std::string ConvertPrimTypeToString(const EPrimType primType);
-
 	unsigned char lDrawDestination;
 	unsigned char lPackType;
 	unsigned short lType;

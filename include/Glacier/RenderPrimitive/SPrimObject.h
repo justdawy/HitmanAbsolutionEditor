@@ -1,8 +1,6 @@
 #pragma once
-
 #include "SPrimHeader.h"
 #include "Math/Vector3.h"
-
 struct SPrimObject : SPrimHeader
 {
 	enum class SUBTYPE
@@ -14,7 +12,6 @@ struct SPrimObject : SPrimHeader
 		SUBTYPE_STANDARDUV3 = 4,
 		SUBTYPE_STANDARDUV4 = 5
 	};
-
 	enum class PROPERTY_FLAGS
 	{
 		PROPERTY_XAXISLOCKED = 1,
@@ -25,9 +22,7 @@ struct SPrimObject : SPrimHeader
 		PROPERTY_COLOR1 = 32,
 		PROPERTY_ISNOPHYSICSPROP = 64
 	};
-
 	static std::string ConvertSubTypeToString(const SUBTYPE subType);
-
 	unsigned char lSubType;
 	unsigned char lProperties;
 	unsigned char lLODMask;

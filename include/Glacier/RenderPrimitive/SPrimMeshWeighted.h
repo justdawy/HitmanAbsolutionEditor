@@ -1,7 +1,5 @@
 #pragma once
-
 #include "SPrimMesh.h"
-
 struct SPrimMeshWeighted : SPrimMesh
 {
 	unsigned int lNumCopyBones;

@@ -1,5 +1,4 @@
 #pragma once
-
 struct SSBCExternalParametersProperties
 {
 	bool m_bIsDistanceControlled;

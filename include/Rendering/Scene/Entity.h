@@ -1,12 +1,9 @@
 #pragma once
-
 #include <string>
 #include <vector>
 #include <DirectXMath.h>
 #include <typeinfo>
-
 #include "Component.h"
-
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
@@ -21,7 +18,6 @@ public:
 	void AddChild(std::shared_ptr<Entity> entity);
 	void Render();
 	void RenderComponents();
-
 	template <typename T>
 	std::shared_ptr<T> GetComponent() const
 	{
@@ -31,16 +27,13 @@ public:
 			{
 				continue;
 			}
-
 			if (typeid(T) == typeid(*components[i].get()))
 			{
 				return std::static_pointer_cast<T>(components[i]);
 			}
 		}
-
 		return nullptr;
 	}
-
 	template <typename T>
 	std::shared_ptr<T> GetComponent()
 	{
@@ -51,18 +44,14 @@ public:
 				return std::static_pointer_cast<T>(components[i]);
 			}
 		}
-
 		return nullptr;
 	}
-
 	template <typename T>
 	void AddComponent(const char* name, const char* icon)
 	{
 		std::shared_ptr<T> component = std::make_shared<T>(name, icon, this->shared_from_this());
-
 		components.push_back(component);
 	}
-
 private:
 	std::string name;
 	bool isVisible;

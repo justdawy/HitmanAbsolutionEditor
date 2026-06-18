@@ -1,13 +1,9 @@
 #pragma once
-
 #include <string>
-
 #include "Glacier/Resource/SResourceHeaderHeader.h"
 #include "Glacier/Resource/HeaderLibraryChunkFlags.h"
-
 #include "Resource.h"
 #include "IO/BinaryReader.h"
-
 class HeaderLibrary
 {
 public:
@@ -23,7 +19,6 @@ public:
 		std::vector<unsigned int> ridMappingIndices;
 		std::vector<unsigned long long> ridMappingIDs;
 	};
-
 	const std::string& GetFilePath() const;
 	const SResourceHeaderHeader& GetResourceHeaderHeader() const;
 	const std::vector<Resource>& GetReferences() const;
@@ -32,7 +27,6 @@ public:
 	bool ParseHeaderLibrary(std::string& resourceID);
 	void ParseReferencesChunk(const BinaryReader& binaryReader);
 	HeaderLibraryChunk ParseHeaderLibraryChunk(const int index);
-
 private:
 	std::string filePath;
 	SResourceHeaderHeader resourceHeaderHeader;

@@ -1,16 +1,12 @@
 #pragma once
-
 #include <Windows.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
-
 #include "Component.h"
 #include "Entity.h"
 #include "Math/Ray.h"
 #include "Math/Matrix.h"
-
 class Renderer3D;
-
 class Camera : public Component
 {
 public:
@@ -39,7 +35,6 @@ public:
 	void Render() override;
 	void RenderProperties() override;
 	void SetRenderer3D(std::shared_ptr<Renderer3D> renderer3D);
-
 private:
 	Matrix view;
 	Matrix projection;

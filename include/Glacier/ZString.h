@@ -1,14 +1,10 @@
 #pragma once
-
 #include <cstdint>
 #include <string.h>
-
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
-
 class ZBinarySerializer;
-
 class ZString
 {
 public:
@@ -23,7 +19,6 @@ public:
 	void SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset);
 	static ZString* DeserializeFromJson(const char* chars);
 	bool operator==(const ZString& other) const;
-
 private:
 	unsigned int m_length;
 	const char* m_chars;

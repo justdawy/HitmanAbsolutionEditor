@@ -1,14 +1,10 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
-
 #include "Resources/SoundDefinitions.h"
-
 void SoundDefinitions::Entry::SerializeToJson(const std::vector<std::shared_ptr<Resource>>& references, rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, const bool hasActorSoundDefinitions)
 {
 	writer.StartObject();
-
 	writer.String("definition");
-
 	if (hasActorSoundDefinitions)
 	{
 		writer.String(ConvertActorSoundDefinitionToString(static_cast<SActorSoundDefs::EDefinition>(definition)).c_str());
@@ -17,9 +13,7 @@ void SoundDefinitions::Entry::SerializeToJson(const std::vector<std::shared_ptr<
 	{
 		writer.String(ConvertDoorSoundDefinitionToString(static_cast<SDoorSoundDefs::EDefinition>(definition)).c_str());
 	}
-
 	writer.String("waveBank");
-
 	if (referenceIndex != -1)
 	{
 		writer.String(references[referenceIndex]->GetResourceID().c_str());
@@ -28,40 +22,30 @@ void SoundDefinitions::Entry::SerializeToJson(const std::vector<std::shared_ptr<
 	{
 		writer.String("");
 	}
-
 	writer.String("attenuationOffset");
 	writer.Int(attenuationOffset);
-
 	writer.String("groupNumber");
 	writer.Int(groupNumber);
-
 	writer.String("selectionMode");
 	writer.String(ConvertSoundPlayParametersToString(selectionMode).c_str());
-
 	writer.String("noRepeatsCount");
 	writer.Int(noRepeatsCount);
-
 	writer.String("subSoundRepeatCounts");
-
 	if (subSoundRepeatCounts.size() > 0)
 	{
 		writer.StartArray();
-
 		for (size_t i = 0; i < subSoundRepeatCounts.size(); ++i)
 		{
 			writer.Uint(subSoundRepeatCounts[i]);
 		}
-
 		writer.EndArray();
 	}
 	else
 	{
 		writer.Null();
 	}
-
 	writer.EndObject();
 }
-
 std::string SoundDefinitions::Entry::ConvertActorSoundDefinitionToString(const SActorSoundDefs::SActorSoundDefs::EDefinition definition)
 {
 	switch (definition)
@@ -634,7 +618,6 @@ std::string SoundDefinitions::Entry::ConvertActorSoundDefinitionToString(const S
 			return "";
 	};
 }
-
 std::string SoundDefinitions::Entry::ConvertDoorSoundDefinitionToString(const SDoorSoundDefs::EDefinition definition)
 {
 	switch (definition)
@@ -651,7 +634,6 @@ std::string SoundDefinitions::Entry::ConvertDoorSoundDefinitionToString(const SD
 			return "";
 	}
 }
-
 std::string SoundDefinitions::Entry::ConvertSoundPlayParametersToString(const ESoundPlayParameters soundPlayParameters)
 {
 	switch (soundPlayParameters)
@@ -666,38 +648,29 @@ std::string SoundDefinitions::Entry::ConvertSoundPlayParametersToString(const ES
 			return "";
 	}
 }
-
 void SoundDefinitions::Deserialize()
 {
 	BinaryReader binaryReader = BinaryReader(resourceData, resourceDataSize);
 	const unsigned int entryCount = binaryReader.Read<unsigned int>();
-
 	entries.reserve(entryCount);
-
 	for (unsigned int i = 0; i < entryCount; ++i)
 	{
 		Entry entry;
-
 		entry.definition = binaryReader.Read<int>();
 		entry.referenceIndex = binaryReader.Read<unsigned int>();
 		entry.attenuationOffset = binaryReader.Read<int>();
 		entry.groupNumber = binaryReader.Read<int>();
 		entry.selectionMode = static_cast<ESoundPlayParameters>(binaryReader.Read<unsigned int>());
 		entry.noRepeatsCount = binaryReader.Read<int>();
-
 		const int numSubSoundRepeatCounts = binaryReader.Read<int>();
-
 		for (unsigned int j = 0; j < numSubSoundRepeatCounts; ++j)
 		{
 			entry.subSoundRepeatCounts.push_back(binaryReader.Read<unsigned char>());
 		}
-
 		entries.push_back(entry);
 	}
-
 	isResourceDeserialized = true;
 }
-
 void SoundDefinitions::Export(const std::string& outputPath, const std::string& exportOption)
 {
 	if (exportOption.starts_with("Raw"))
@@ -709,37 +682,25 @@ void SoundDefinitions::Export(const std::string& outputPath, const std::string& 
 		SerializeToJson(outputPath);
 	}
 }
-
 void SoundDefinitions::SerializeToJson(const std::string& outputFilePath)
 {
 	const bool hasActorSoundDefinitions = entries.size() - 1 == static_cast<int>(SActorSoundDefs::EDefinition::_Last);
-
 	rapidjson::StringBuffer stringBuffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(stringBuffer);
-
 	writer.StartObject();
-
 	writer.String("entries");
 	writer.StartArray();
-
 	const std::vector<std::shared_ptr<Resource>>& references = GetReferences();
-
 	for (size_t i = 0; i < entries.size(); ++i)
 	{
 		entries[i].SerializeToJson(references, writer, hasActorSoundDefinitions);
 	}
-
 	writer.EndArray();
-
 	writer.EndObject();
-
 	std::ofstream outputFileStream = std::ofstream(outputFilePath);
-
 	outputFileStream << stringBuffer.GetString();
-
 	outputFileStream.close();
 }
-
 std::vector<SoundDefinitions::Entry>& SoundDefinitions::GetEntries()
 {
 	return entries;

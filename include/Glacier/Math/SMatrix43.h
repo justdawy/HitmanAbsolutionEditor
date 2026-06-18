@@ -1,11 +1,8 @@
 #pragma once
-
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
-
 #include "SVector3.h"
 #include "SMatrix33.h"
-
 struct SMatrix43
 {
 	SMatrix43();
@@ -17,7 +14,6 @@ struct SMatrix43
 	bool operator==(const SMatrix43& other) const;
 	void Decompose(SVector3& position, SVector3& rotation, SVector3& scale);
 	static SMatrix43 Recompose(SVector3& position, SVector3& rotation, SVector3& scale);
-
 	union
 	{
 		struct
@@ -27,13 +23,11 @@ struct SMatrix43
 			SVector3 ZAxis;
 			SVector3 Trans;
 		};
-
 		struct
 		{
 			SMatrix33 Rot;
 			SVector3 Trans;
 		};
-
 		struct
 		{
 			float m11;
@@ -49,7 +43,6 @@ struct SMatrix43
 			float m42;
 			float m43;
 		};
-
 		float v[12];
 		SVector3 r[4];
 	};

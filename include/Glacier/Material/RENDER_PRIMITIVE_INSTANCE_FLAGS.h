@@ -1,5 +1,4 @@
 #pragma once
-
 enum class RENDER_PRIMITIVE_INSTANCE_FLAGS
 {
 	TF_OPAQUE_EMISSIVE = 1,
@@ -16,7 +15,6 @@ enum class RENDER_PRIMITIVE_INSTANCE_FLAGS
 	TF_TRANSALL = 6,
 	TF_ALL = -1
 };
-
 inline RENDER_PRIMITIVE_INSTANCE_FLAGS operator&(RENDER_PRIMITIVE_INSTANCE_FLAGS lhs, RENDER_PRIMITIVE_INSTANCE_FLAGS rhs)
 {
 	return static_cast<RENDER_PRIMITIVE_INSTANCE_FLAGS>(static_cast<int>(lhs) & static_cast<int>(rhs));

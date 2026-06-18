@@ -1,11 +1,8 @@
 #pragma once
-
 #include <map>
 #include <vector>
 #include <set>
-
 #include "BasePanel.h"
-
 class DeepSearchPanel : public BasePanel
 {
 public:
@@ -15,7 +12,6 @@ public:
 		std::string name;
 		std::vector<TreeNode> children;
 	};
-
 	HeaderLibrariesSearchPanel(const char* name, const char* icon);
 	void Render() override;
 	void RenderTree(TreeNode& treeNode);
@@ -23,7 +19,6 @@ public:
 	void LoadResourceTypes();
 	void FilterHeaderLibraryResourceIDs(const char* hint, std::map<std::string, bool*>& filteredHeaderLibraryResourceIDs);
 	void SearchHeaderLibraries(std::map<std::string, bool*>& filteredHeaderLibraryResourceIDs);
-
 private:
 	std::map<std::string, bool> headerLibraryResourceIDs;
 	std::map<std::string, bool> resourceTypes;

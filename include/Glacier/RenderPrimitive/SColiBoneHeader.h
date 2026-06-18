@@ -1,5 +1,4 @@
 #pragma once
-
 struct SColiBoneHeader
 {
 	unsigned short nTotalSize;

@@ -1,12 +1,9 @@
 #pragma once
-
 #include <cstring>
-
 #include "WAVHeader.h"
 #include "IMAADPCMWAVEFORMAT.h"
 #include "../FSB.h"
 #include "IO/BinaryWriter.h"
-
 namespace FSB
 {
 	namespace IO

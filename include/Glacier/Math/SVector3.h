@@ -1,16 +1,11 @@
 #pragma once
-
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
-
 class ZBinarySerializer;
-
 struct float4;
 struct SVector4;
-
 class Vector3;
-
 struct SVector3
 {
 	SVector3();
@@ -54,7 +49,6 @@ struct SVector3
 	static int DominantAxis(const SVector3& vector);
 	static SVector3 ProjectNormalized(const SVector3& p, const SVector3& proj);
 	static float Angle(const SVector3& vector, const SVector3& vector2);
-
 	union
 	{
 		struct
@@ -63,7 +57,6 @@ struct SVector3
 			float y;
 			float z;
 		};
-
 		float v[3];
 	};
 };

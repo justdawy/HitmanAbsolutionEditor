@@ -1,5 +1,4 @@
 #pragma once
-
 struct SResourceHeaderHeader
 {
 	unsigned int m_type;

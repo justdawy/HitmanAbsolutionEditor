@@ -1,5 +1,4 @@
 #include "Glacier/RenderPrimitive/SPrimHeader.h"
-
 std::string SPrimHeader::ConvertPrimTypeToString(const EPrimType primType)
 {
 	switch (primType)

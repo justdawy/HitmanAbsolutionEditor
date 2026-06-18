@@ -1,7 +1,5 @@
 #pragma once
-
 #include <string>
-
 class Hash
 {
 public:
@@ -12,144 +10,111 @@ public:
         unsigned int c;
         unsigned int d;
     };
-
     static MD5Hash MD5(const std::string& message);
     static std::string ConvertMD5ToString(const MD5Hash& md5Hash);
     static unsigned long long GetMD5(const std::string& message);
-
     static constexpr unsigned int Crc32(const char* data)
     {
         unsigned int hash = 0xFFFFFFFF;
-
         while (*data)
         {
             hash = crc32Table[*data ^ (hash & 0xFF)] ^ (hash >> 8);
             data++;
         }
-
         return hash ^ 0xFFFFFFFF;
     }
-
     static constexpr unsigned int Crc32(const char* data, size_t length)
     {
         unsigned int hash = 0xFFFFFFFF;
-
         while (length--)
         {
             hash = crc32Table[*data ^ (hash & 0xFF)] ^ (hash >> 8);
             data++;
         }
-
         return hash ^ 0xFFFFFFFF;
     }
-
     static constexpr unsigned int Fnv1a(const char* data)
     {
         unsigned int hash = 0x811C9DC5;
-
         while (*data)
         {
             hash = (hash ^ *data) * 0x1000193;
             data++;
         }
-
         return hash;
     }
-
     static unsigned int Fnv1a(const char* data, size_t length)
     {
         unsigned int hash = 0x811C9DC5;
-
         while (length--)
         {
             hash = (hash ^ *data) * 0x1000193;
             data++;
         }
-
         return hash;
     }
-
     static constexpr unsigned int Fnv1aLower(const char* data)
     {
         unsigned int hash = 0x811C9DC5;
-
         while (*data)
         {
             hash = (hash ^ tolower(*data)) * 0x1000193;
             data++;
         }
-
         return hash;
     }
-
     static unsigned int Fnv1aLower(const char* data, size_t length)
     {
         unsigned int hash = 0x811C9DC5;
-
         while (length--)
         {
             hash = (hash ^ tolower(*data)) * 0x1000193;
             data++;
         }
-
         return hash;
     }
-
     static constexpr unsigned long long Fnv1a64(const char* data)
     {
         unsigned long long hash = 0x811C9DC5;
-
         while (*data)
         {
             hash = (hash ^ *data) * 0x1000193;
             data++;
         }
-
         return hash;
     }
-
     static constexpr unsigned long long Fnv1a64(const char* data, size_t length)
     {
         unsigned long long hash = 0x811C9DC5;
-
         while (length--)
         {
             hash = (hash ^ *data) * 0x1000193;
             data++;
         }
-
         return hash;
     }
-
     static constexpr unsigned long long Fnv1a64Lower(const char* data)
     {
         unsigned long long hash = 0x811C9DC5;
-
         while (*data)
         {
             hash = (hash ^ tolower(*data)) * 0x1000193;
             data++;
         }
-
         return hash;
     }
-
     static constexpr unsigned long long Fnv1a64Lower(const char* data, size_t length)
     {
         unsigned long long hash = 0x811C9DC5;
-
         while (length--)
         {
             hash = (hash ^ tolower(*data)) * 0x1000193;
             data++;
         }
-
         return hash;
     }
-
 private:
     static constexpr unsigned int LeftRotate(unsigned int x, int c);
-
     static constexpr const unsigned int shiftAmounts[64] = {
         7, 12, 17, 22,
         7, 12, 17, 22,
@@ -168,7 +133,6 @@ private:
         6, 10, 15, 21,
         6, 10, 15, 21
     };
-
     static constexpr const unsigned int partsOfSines[64] = {
         0xD76AA478, 0xE8C7B756, 0x242070DB, 0xC1BDCEEE,
         0xF57C0FAF, 0x4787C62A, 0xA8304613, 0xFD469501,
@@ -187,7 +151,6 @@ private:
         0x6FA87E4F, 0xFE2CE6E0, 0xA3014314, 0x4E0811A1,
         0xF7537E82, 0xBD3AF235, 0x2AD7D2BB, 0xEB86D391
     };
-
     static constexpr const unsigned int crc32Table[256] =
     {
         0x00000000U, 0x77073096U, 0xEE0E612CU, 0x990951BAU, 0x076DC419U,

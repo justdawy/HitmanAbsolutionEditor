@@ -1,12 +1,9 @@
 #pragma once
-
 #include <d3d11.h>
-
 #include "SwapChain.h"
 #include "Logger.h"
 #include "CommandList.h"
 #include "Viewport.h"
-
 class DirectXRenderer
 {
 public:
@@ -26,7 +23,6 @@ public:
 	CommandList& GetCommandList();
 	HRESULT CreateTexture(unsigned short width, unsigned short height, ID3D11Texture2D** texture, ID3D11ShaderResourceView** textureView);
 	HRESULT UpdateTexture(ID3D11Texture2D* texture, ID3D11ShaderResourceView* textureView, const unsigned char* pData, unsigned short width, unsigned short height);
-
 private:
 	HWND hwnd;
 	ID3D11Device* d3dDevice;

@@ -1,11 +1,8 @@
 #pragma once
-
 #include "rapidjson/prettywriter.h"
-
 struct SBoneRig
 {
 	void SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer);
-
 	unsigned int m_NumberOfBones;
 	unsigned int m_NumberOfAnimatedBones;
 	unsigned int lBoneDefinitions;

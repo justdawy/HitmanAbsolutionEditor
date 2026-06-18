@@ -1,15 +1,10 @@
 #pragma once
-
 #include <unordered_map>
-
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
-
 #include "ZObjectRef.h"
-
 class ZBinarySerializer;
-
 class ZVariant : public ZObjectRef
 {
 public:
@@ -23,7 +18,6 @@ public:
 	bool SerializeData(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer);
 	static ZVariant* DeserializeFromJson(const rapidjson::Value& object);
 	static void* GetValue(const ZVariant* variant, const std::unordered_map<STypeID*, std::vector<void*>>& values);
-
 	template <typename T>
 	T& Get()
 	{

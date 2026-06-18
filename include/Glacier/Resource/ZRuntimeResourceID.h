@@ -1,12 +1,8 @@
 #pragma once
-
 #include <string>
-
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
-
 class ZBinarySerializer;
-
 class ZRuntimeResourceID
 {
 public:
@@ -22,7 +18,6 @@ public:
 	void SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer);
 	void SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset);
 	static ZRuntimeResourceID* DeserializeFromJson(const rapidjson::Value& object);
-
 private:
 	unsigned int m_IDHigh;
 	unsigned int m_IDLow;

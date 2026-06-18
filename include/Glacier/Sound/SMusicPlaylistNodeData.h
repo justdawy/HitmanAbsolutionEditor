@@ -1,13 +1,10 @@
 #pragma once
-
 #include "../ZString.h"
 #include "../Containers/TArray.h"
 #include "EMusicPlaylistPlayType.h"
-
 struct SMusicPlaylistNodeData
 {
 	void SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer);
-
 	int m_nSegmentIndex;
 	ZString m_sName;
 	int m_nParentIndex;

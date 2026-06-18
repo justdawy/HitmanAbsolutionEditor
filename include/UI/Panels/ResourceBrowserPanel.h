@@ -1,16 +1,13 @@
 #pragma once
-
 #include <vector>
 #include <map>
 #include <set>
 #include <string>
 #include <d3d11.h>
-
 #include "BasePanel.h"
 #include "UI/Documents/Document.h"
 #include "Resources/Resource.h"
 #include "Rendering/DirectXRenderer.h"
-
 class ResourceBrowserPanel : public BasePanel
 {
 public:
@@ -21,7 +18,6 @@ public:
 		std::string name;
 		std::vector<ResourceNode> children;
 	};
-
 	ResourceBrowserPanel(const char* name, const char* icon);
 	~ResourceBrowserPanel();
 	void Render() override;
@@ -33,14 +29,12 @@ public:
 	void LoadResourceTypes();
 	void LoadResource(std::shared_ptr<Resource> resource, const ResourceNode& resourceNode, const bool loadBackReferences = true);
 	void CreateResourceDocument(const ResourceNode& resourceNode);
-
 	void CollectTeliChildren(const std::string& folderPath,
 		const std::vector<std::string>& languageFilters,
 		std::vector<unsigned long long>& outHashes,
 		std::vector<std::string>& outNames);
 	void BatchExportTeliFiles(const std::string& outputFolder, const std::string& exportFormat);
 	void BatchImportTeliFiles(const std::string& inputFolder);
-
 private:
 	ResourceNode assemblyNode;
 	ResourceNode modulesNode;
@@ -55,8 +49,6 @@ private:
 	bool showFsbsPatchPopup;
 	std::shared_ptr<Resource> resource;
 	ResourceNode pendingResourceNode;
-
-	// Batch TELI export/import state
 	bool showBatchTeliExportPopup;
 	bool showBatchTeliImportPopup;
 	std::string batchTeliParentPath;

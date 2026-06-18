@@ -1,5 +1,4 @@
 #pragma once
-
 struct SProperty
 {
 	unsigned int lName;

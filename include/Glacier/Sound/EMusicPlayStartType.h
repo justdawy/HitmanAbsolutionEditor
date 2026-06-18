@@ -1,5 +1,4 @@
 #pragma once
-
 enum EMusicPlayStartType
 {
 	EMusicPlayStartType_Now = 0,

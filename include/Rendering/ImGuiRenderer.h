@@ -1,13 +1,9 @@
 #pragma once
-
 #include <d3d11.h>
-
 #include "imgui.h"
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx11.h"
-
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 class ImGuiRenderer
 {
 public:
@@ -23,7 +19,6 @@ public:
 	ImFont* GetMiddleItalicFont();
 	ImFont* GetConsolasRegularFont();
 	ImFont* GetConsolasBoldFont();
-
 private:
 	ImFont* defaultFont;
 	ImFont* middleFont;

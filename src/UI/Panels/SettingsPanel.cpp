@@ -2,33 +2,29 @@
 #include "Settings.h"
 #include "Editor.h"
 #include "Utility/FileDialog.h"
+#include <IconsMaterialDesignIcons.h>
 #include <shlobj.h>
 #include <filesystem>
 #include <string>
-
 SettingsPanel::SettingsPanel(const char* name, const char* icon) : BasePanel(name, icon, false)
 {
 }
-
 void SettingsPanel::Render()
 {
 	if (!Begin())
 	{
 		return;
 	}
-
 	if (ImGui::IsWindowAppearing()) {
 		ImGui::SetWindowFocus();
 	}
-
 	Settings& settings = Settings::GetInstance();
 	bool rpc = settings.GetEnableDiscordRPC();
 	if (ImGui::Checkbox("Discord RPC", &rpc)) {
 		settings.SetEnableDiscordRPC(rpc);
 		settings.UpdateIniFile("EnableDiscordRPC", rpc ? "1" : "0");
 	}
-
-	if (ImGui::Button("Background")) {
+	if (ImGui::Button(ICON_MDI_IMAGE " Change background")) {
 		std::string path = FileDialog::OpenFile("Image Files (*.png;*.jpg;*.jpeg;*.bmp)\0*.png;*.jpg;*.jpeg;*.bmp\0All Files (*.*)\0*.*\0");
 		if (!path.empty()) {
 			PWSTR docsPath = NULL;
@@ -49,8 +45,6 @@ void SettingsPanel::Render()
 			Editor::GetInstance().LoadBackgroundImage(destPath);
 		}
 	}
-
 	Editor::GetInstance().SetSettingsPanelFocused(ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
-
 	End();
 }

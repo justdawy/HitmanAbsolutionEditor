@@ -1,7 +1,5 @@
 #pragma once
-
 #include <vector>
-
 #include "Glacier/RenderPrimitive/SPrimObjectHeader.h"
 #include "Glacier/RenderPrimitive/SPrimMesh.h"
 #include "Glacier/RenderPrimitive/SPrimSubMesh.h"
@@ -9,13 +7,11 @@
 #include "Glacier/RenderPrimitive/SColiBoxHeader.h"
 #include "Glacier/RenderPrimitive/SColiBox.h"
 #include "Glacier/RenderPrimitive/SColiBoneHeader.h"
-
 #include "IO/BinaryReader.h"
 #include "Resources/BoneRig.h"
 #include "Resources/RenderMaterialInstance.h"
 #include "Glacier/RenderPrimitive/SBoneInfo.h"
 #include "Physics.h"
-
 class RenderPrimitive : public Resource
 {
 public:
@@ -26,7 +22,6 @@ public:
 		unsigned char b;
 		unsigned char a;
 	};
-
 	struct Vertex
 	{
 		Vector4 position;
@@ -38,13 +33,11 @@ public:
 		float weights[4];
 		unsigned char boneRemapValues[4];
 	};
-
 	struct CollisionBox
 	{
 		SColiBoxHeader coliBoxHeader;
 		std::vector<SColiBox> chunks;
 	};
-
 	class Mesh
 	{
 	public:
@@ -83,7 +76,6 @@ public:
 		const unsigned int GetStride() const;
 		void CreateVertexBuffer();
 		const SPrimSubMesh& GetSubMesh() const;
-
 	protected:
 		SPrimSubMesh primSubMesh;
 		std::vector<unsigned short> indices;
@@ -91,7 +83,6 @@ public:
 		void* vertexBuffer;
 		unsigned int vertexBufferSize;
 	};
-
 	class StandardMesh : public Mesh
 	{
 	public:
@@ -103,12 +94,10 @@ public:
 		const unsigned short GetMaterialID() const override;
 		const unsigned char GetLODMask() const override;
 		const CollisionBox& GetCollisionBox() const;
-
 	private:
 		SPrimMesh primMesh;
 		CollisionBox collisionBox;
 	};
-
 	class LinkedMesh : public Mesh
 	{
 	public:
@@ -120,14 +109,12 @@ public:
 		const unsigned short GetMaterialID() const override;
 		const unsigned char GetLODMask() const override;
 		const std::vector<CollisionBox>& GetCollisionBoxes() const;
-
 	private:
 		SPrimMeshWeighted primMeshWeighted;
 		SBoneInfo boneInfo;
 		SColiBoneHeader coliBoneHeader;
 		std::vector<CollisionBox> collisionBoxes;
 	};
-
 	class WeightedMesh : public Mesh
 	{
 	public:
@@ -139,12 +126,10 @@ public:
 		const unsigned short GetMaterialID() const override;
 		const unsigned char GetLODMask() const override;
 		const unsigned char GetBoneIndex(unsigned char boneRemapValue) const;
-
 	private:
 		SPrimMeshWeighted primMeshWeighted;
 		SBoneInfo boneInfo;
 	};
-
 	const SPrimObjectHeader& GetPrimObjectHeader() const;
 	const unsigned int GetBoneRigResourceIndex() const;
 	const std::vector<std::shared_ptr<Mesh>>& GetMeshes() const;
@@ -156,7 +141,6 @@ public:
 	void ConvertToOBJ(const std::string& outputPath);
 	void ConvertToGLB(const std::string& glbFilePath, const bool rotate);
 	const bool HasBulletCollisionData() const;
-
 private:
 	SPrimObjectHeader primObjectHeader;
 	std::vector<std::shared_ptr<Mesh>> meshes;

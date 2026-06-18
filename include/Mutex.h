@@ -1,7 +1,5 @@
 #pragma once
-
 #include <Windows.h>
-
 class ScopedSharedGuard
 {
 public:
@@ -9,16 +7,13 @@ public:
 	{
 		AcquireSRWLockShared(srwLock);
 	}
-
 	~ScopedSharedGuard()
 	{
 		ReleaseSRWLockShared(srwLock);
 	}
-
 private:
 	SRWLOCK* srwLock;
 };
-
 class ScopedExclusiveGuard
 {
 public:
@@ -26,12 +21,10 @@ public:
 	{
 		AcquireSRWLockExclusive(srwLock);
 	}
-
 	~ScopedExclusiveGuard()
 	{
 		ReleaseSRWLockExclusive(srwLock);
 	}
-
 private:
 	SRWLOCK* srwLock;
 };

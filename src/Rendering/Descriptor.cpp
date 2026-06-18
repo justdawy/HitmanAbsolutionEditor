@@ -1,5 +1,4 @@
 #include "Rendering/Descriptor.h"
-
 Descriptor::Descriptor(const Descriptor& descriptor)
 {
     type = descriptor.type;
@@ -10,7 +9,6 @@ Descriptor::Descriptor(const Descriptor& descriptor)
     mip = descriptor.mip;
     arraySize = descriptor.arraySize;
 }
-
 Descriptor::Descriptor(const std::string& name, const Type type, const ImageLayout layout, const unsigned int slot, const unsigned int arraySize, const unsigned int stage)
 {
     this->type = type;
@@ -20,12 +18,10 @@ Descriptor::Descriptor(const std::string& name, const Type type, const ImageLayo
     this->name = name;
     this->arraySize = arraySize;
 }
-
 bool Descriptor::IsStorage() const
 {
     return type == Type::TextureStorage;
 }
-
 bool Descriptor::IsArray() const
 {
     return arraySize > 0;

@@ -1,7 +1,5 @@
 #pragma once
-
 class ZResourceStub;
-
 class ZResourcePtr
 {
 private:

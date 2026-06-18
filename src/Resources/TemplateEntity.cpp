@@ -7,26 +7,20 @@
 #include "Glacier/SColorRGB.h"
 #include "Glacier/SSettingsParamMultiplier.h"
 #include "Glacier/ZCurve.h"
-
 #include "Resources/TemplateEntity.h"
 #include "Resources/TemplateEntityBlueprint.h"
 #include "Utility/ResourceUtility.h"
 #include "Registry/TypeRegistry.h"
 #include "Registry/ResourceInfoRegistry.h"
-
 void TemplateEntity::Deserialize()
 {
 	ZBinaryDeserializer binaryDeserializer;
 	const std::vector<std::shared_ptr<Resource>>& references = GetReferences();
 	void* templateEntity = binaryDeserializer.Deserialize(GetResourceData(), GetResourceDataSize(), &references);
-
 	Parse(templateEntity);
-
 	operator delete(templateEntity, std::align_val_t(binaryDeserializer.GetAlignment()));
-
 	isResourceDeserialized = true;
 }
-
 void TemplateEntity::Export(const std::string& outputPath, const std::string& exportOption)
 {
 	if (exportOption.starts_with("Raw"))
@@ -42,164 +36,113 @@ void TemplateEntity::Export(const std::string& outputPath, const std::string& ex
 		SerializeToJson(outputPath);
 	}
 }
-
 void TemplateEntity::SerializeToJson(const std::string& outputFilePath)
 {
 	std::shared_ptr<TemplateEntityBlueprint> tbluResource;
 	std::vector<std::shared_ptr<Resource>>& tempReferences = GetReferences();
-
 	for (size_t i = 0; i < tempReferences.size(); ++i)
 	{
 		const ResourceInfoRegistry::ResourceInfo& referenceInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(tempReferences[i]->GetHash());
-
 		if (referenceInfo.type == "TBLU")
 		{
 			tbluResource = std::static_pointer_cast<TemplateEntityBlueprint>(tempReferences[i]);
-
 			break;
 		}
 	}
-
 	if (!tbluResource->IsResourceLoaded())
 	{
 		const ResourceInfoRegistry::ResourceInfo& tbluResourceInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(tbluResource->GetHash());
-
 		tbluResource->LoadResource(0, tbluResourceInfo.headerLibraries[0].chunkIndex, tbluResourceInfo.headerLibraries[0].indexInLibrary, true, false, true);
 		tbluResource->Deserialize();
 		tbluResource->DeleteResourceData();
 	}
-
 	rapidjson::StringBuffer stringBuffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(stringBuffer);
-
 	writer.StartObject();
-
 	writer.String("templateEntityResourceID");
 	writer.String(GetResourceID().c_str());
-
 	writer.String("templateEntityBlueprintResourceID");
 	writer.String(tbluResource->GetResourceID().c_str());
-
 	writer.String("blueprintIndexInResourceHeader");
 	writer.Int(templateEntity->blueprintIndexInResourceHeader);
-
 	writer.String("rootEntityIndex");
 	writer.Int(templateEntity->rootEntityIndex);
-
 	writer.String("entityTemplates");
 	writer.StartArray();
-
 	std::vector<std::shared_ptr<Resource>>& tbluReferences = tbluResource->GetReferences();
 	std::shared_ptr<STemplateEntityBlueprint> templateEntityBlueprint = tbluResource->GetTemplateEntityBlueprint();
-
 	for (unsigned int i = 0; i < templateEntity->entityTemplates.Size(); ++i)
 	{
 		writer.StartObject();
-
 		std::string templateEntityResourceID = tempReferences[templateEntity->entityTemplates[i].entityTypeResourceIndex]->GetResourceID();
 		std::string templateEntityBlueprintResourceID = tbluReferences[templateEntityBlueprint->entityTemplates[i].entityTypeResourceIndex]->GetResourceID();
-
 		writer.String("templateEntityResourceID");
 		writer.String(templateEntityResourceID.c_str());
-
 		writer.String("templateEntityBlueprintResourceID");
 		writer.String(templateEntityBlueprintResourceID.c_str());
-
 		writer.String("entityIndex");
 		writer.Uint(i);
-
 		writer.String("parentIndex");
 		writer.Int(templateEntity->entityTemplates[i].parentIndex);
-
 		writer.String("tempEntityTypeResourceIndex");
 		writer.Int(templateEntity->entityTemplates[i].entityTypeResourceIndex);
-
 		writer.String("tbluEntityTypeResourceIndex");
 		writer.Int(templateEntityBlueprint->entityTemplates[i].entityTypeResourceIndex);
-
 		writer.String("entityName");
 		writer.String(templateEntityBlueprint->entityTemplates[i].entityName.ToCString());
-
 		writer.String("propertyValues");
 		templateEntity->entityTemplates[i].propertyValues.SerializeToJson(writer);
-
 		writer.String("postInitPropertyValues");
 		templateEntity->entityTemplates[i].postInitPropertyValues.SerializeToJson(writer);
-
 		writer.String("propertyAliases");
 		templateEntityBlueprint->entityTemplates[i].propertyAliases.SerializeToJson(writer);
-
 		writer.String("exposedEntities");
 		templateEntityBlueprint->entityTemplates[i].exposedEntities.SerializeToJson(writer);
-
 		writer.String("exposedInterfaces");
 		templateEntityBlueprint->entityTemplates[i].exposedInterfaces.SerializeToJson(writer);
-
 		writer.String("entitySubsets");
 		templateEntityBlueprint->entityTemplates[i].entitySubsets.SerializeToJson(writer);
-
 		writer.EndObject();
 	}
-
 	writer.EndArray();
-
 	writer.String("pinConnections");
 	templateEntityBlueprint->pinConnections.SerializeToJson(writer);
-
 	writer.String("inputPinForwardings");
 	templateEntityBlueprint->inputPinForwardings.SerializeToJson(writer);
-
 	writer.String("outputPinForwardings");
 	templateEntityBlueprint->outputPinForwardings.SerializeToJson(writer);
-
 	writer.EndObject();
-
 	std::ofstream outputFileStream = std::ofstream(outputFilePath);
-
 	outputFileStream << stringBuffer.GetString();
-
 	outputFileStream.close();
 }
-
 void TemplateEntity::Parse(void* templateEntity)
 {
 	this->templateEntity = std::make_shared<STemplateEntity>();
-
 	this->templateEntity->blueprintIndexInResourceHeader = *reinterpret_cast<unsigned int*>(templateEntity);
 	this->templateEntity->rootEntityIndex = *(reinterpret_cast<unsigned int*>(templateEntity) + 1);
-
 	const unsigned int entityTemplatesStartAddress = *(reinterpret_cast<unsigned int*>(templateEntity) + 2);
 	const unsigned int entityTemplatesEndAddress = *(reinterpret_cast<unsigned int*>(templateEntity) + 3);
-	const unsigned int entityTemplateCount = ResourceUtility::CalculateArrayElementsCount(entityTemplatesStartAddress, entityTemplatesEndAddress, 0x20); //0x20 is size of STemplateSubEntity
-
+	const unsigned int entityTemplateCount = ResourceUtility::CalculateArrayElementsCount(entityTemplatesStartAddress, entityTemplatesEndAddress, 0x20);
 	this->templateEntity->entityTemplates.Resize(entityTemplateCount);
-
 	for (unsigned int i = 0; i < entityTemplateCount; i++)
 	{
-		const unsigned int entityTemplateAddress = entityTemplatesStartAddress + 0x20 * i; //0x20 is size of STemplateSubEntity
+		const unsigned int entityTemplateAddress = entityTemplatesStartAddress + 0x20 * i;
 		STemplateSubEntity* entityTemplate = ResourceUtility::Convert4ByteAddressTo8BytePointer<STemplateSubEntity>(templateEntity, entityTemplateAddress);
-
 		this->templateEntity->entityTemplates[i].parentIndex = entityTemplate->parentIndex;
 		this->templateEntity->entityTemplates[i].entityTypeResourceIndex = entityTemplate->entityTypeResourceIndex;
-
 		const unsigned int propertyValuesStartAddress = *(reinterpret_cast<unsigned int*>(entityTemplate) + 2);
 		const unsigned int propertyValuesEndAddress = *(reinterpret_cast<unsigned int*>(entityTemplate) + 3);
-		
 		ParseProperties(templateEntity, propertyValuesStartAddress, propertyValuesEndAddress, this->templateEntity->entityTemplates[i].propertyValues);
-
 		const unsigned int postInitPropertyValuesStartAddress = *(reinterpret_cast<unsigned int*>(entityTemplate) + 5);
 		const unsigned int postInitPropertyValuesEndAddres = *(reinterpret_cast<unsigned int*>(entityTemplate) + 6);
-
 		ParseProperties(templateEntity, postInitPropertyValuesStartAddress, postInitPropertyValuesEndAddres, this->templateEntity->entityTemplates[i].postInitPropertyValues);
 	}
 }
-
 void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int propertyValuesStartAddress, const unsigned int propertyValuesEndAddress, TArray<SEntityTemplateProperty>& properties)
 {
-	const unsigned int propertyValueCount = ResourceUtility::CalculateArrayElementsCount(propertyValuesStartAddress, propertyValuesEndAddress, 0xC); //0xC is size of SEntityTemplateProperty
-
+	const unsigned int propertyValueCount = ResourceUtility::CalculateArrayElementsCount(propertyValuesStartAddress, propertyValuesEndAddress, 0xC);
 	properties.Resize(propertyValueCount);
-
 	for (unsigned int i = 0; i < propertyValueCount; i++)
 	{
 		const unsigned int entityTemplatePropertyAddress = propertyValuesStartAddress + 0xC * i;
@@ -211,22 +154,17 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 		const unsigned int dataAddress = *(reinterpret_cast<unsigned int*>(entityTemplateProperty) + 2);
 		void* data = ResourceUtility::Convert4ByteAddressTo8BytePointer<void>(templateEntity, dataAddress);
 		STypeID* typeID2 = TypeRegistry::GetInstance().GetTypeID(type->GetTypeName());
-
 		properties[i].nPropertyID = entityTemplateProperty->nPropertyID;
 		properties[i].value.SetTypeID(typeID2);
-
 		const char* typeName = typeID2->pTypeInfo->GetTypeName();
-
 		if (strcmp(typeName, "SEntityTemplateReference") == 0)
 		{
 			const unsigned int entityIndex = *reinterpret_cast<unsigned int*>(data);
 			const unsigned int charsAddress = *(reinterpret_cast<unsigned int*>(data) + 2);
 			const char* chars = ResourceUtility::Convert4ByteAddressTo8BytePointer<const char>(templateEntity, charsAddress);
 			SEntityTemplateReference* entityTemplateReference = new SEntityTemplateReference();
-
 			entityTemplateReference->entityIndex = entityIndex;
 			entityTemplateReference->exposedEntity = ZString(chars);
-
 			properties[i].value.SetData(entityTemplateReference);
 		}
 		else if (strcmp(typeName, "ZString") == 0)
@@ -234,7 +172,6 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int charsAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const char* chars = ResourceUtility::Convert4ByteAddressTo8BytePointer<const char>(templateEntity, charsAddress);
 			ZString* string = new ZString(chars);
-
 			properties[i].value.SetData(string);
 		}
 		else if (strcmp(typeName, "ZCurve") == 0)
@@ -244,20 +181,16 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int arrayCount = ResourceUtility::CalculateArrayElementsCount(arrayStartAddress, arrayEndAddress, 0x8 * sizeof(float));
 			ZCurve* curve = new ZCurve();
 			TArray<TFixedArray<float, 8>>& data2 = curve->GetData();
-
 			data2.Resize(arrayCount);
-
 			for (unsigned int k = 0; k < arrayCount; k++)
 			{
 				const unsigned int fixedArrayAddress = arrayStartAddress + 0x8 * sizeof(float) * k;
 				TFixedArray<float, 8>* fixedArray = ResourceUtility::Convert4ByteAddressTo8BytePointer<TFixedArray<float, 8>>(templateEntity, fixedArrayAddress);
-
 				for (unsigned int l = 0; l < fixedArray->Size(); ++l)
 				{
 					data2[k].m_pStart[l] = (*fixedArray)[l];
 				}
 			}
-
 			properties[i].value.SetData(curve);
 		}
 		else if (strcmp(typeName, "ZSpeakerLevels") == 0)
@@ -266,40 +199,32 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int floatsEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int floatCount = ResourceUtility::CalculateArrayElementsCount(floatsStartAddress, floatsEndAddress, 0x4);
 			TArray<float>* floats = new TArray<float>(floatCount);
-
 			for (unsigned int k = 0; k < floatCount; k++)
 			{
 				const unsigned int floatAddress = floatsStartAddress + 0x4 * k;
 				float* value = ResourceUtility::Convert4ByteAddressTo8BytePointer<float>(templateEntity, floatAddress);
-
 				(*floats)[k] = *value;
 			}
-
 			properties[i].value.SetData(floats);
 		}
 		else if (strcmp(typeName, "TArray<SEntityTemplateReference>") == 0)
 		{
 			const unsigned int entityTemplateReferencesStartAddress = *reinterpret_cast<unsigned int*>(data);
 			const unsigned int entityTemplateReferencesEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
-			const unsigned int entityTemplateReferenceCount = ResourceUtility::CalculateArrayElementsCount(entityTemplateReferencesStartAddress, entityTemplateReferencesEndAddress, 0xC); //0x20 is size of STemplateSubEntity
+			const unsigned int entityTemplateReferenceCount = ResourceUtility::CalculateArrayElementsCount(entityTemplateReferencesStartAddress, entityTemplateReferencesEndAddress, 0xC);
 			TArray<SEntityTemplateReference>* entityTemplateReferences = new TArray<SEntityTemplateReference>(entityTemplateReferenceCount);
-
 			for (unsigned int k = 0; k < entityTemplateReferenceCount; k++)
 			{
-				unsigned int entityTemplateReferenceAddress = entityTemplateReferencesStartAddress + 0xC * k; //0xC is size of SEntityTemplateReference
+				unsigned int entityTemplateReferenceAddress = entityTemplateReferencesStartAddress + 0xC * k;
 				SEntityTemplateReference* entityTemplateReference = ResourceUtility::Convert4ByteAddressTo8BytePointer<SEntityTemplateReference>(templateEntity, entityTemplateReferenceAddress);
-
 				unsigned int entityIndex = *reinterpret_cast<unsigned int*>(entityTemplateReference);
 				unsigned int charsAddress = *(reinterpret_cast<unsigned int*>(entityTemplateReference) + 2);
 				const char* chars = ResourceUtility::Convert4ByteAddressTo8BytePointer<const char>(templateEntity, charsAddress);
 				SEntityTemplateReference entityTemplateReference2;
-
 				entityTemplateReference2.entityIndex = entityIndex;
 				entityTemplateReference2.exposedEntity = ZString(chars);
-
 				(*entityTemplateReferences)[k] = entityTemplateReference2;
 			}
-
 			properties[i].value.SetData(entityTemplateReferences);
 		}
 		else if (strcmp(typeName, "TArray<float32>") == 0)
@@ -308,15 +233,12 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int floatsEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int floatCount = ResourceUtility::CalculateArrayElementsCount(floatsStartAddress, floatsEndAddress, 0x4);
 			TArray<float>* floats = new TArray<float>(floatCount);
-
 			for (unsigned int k = 0; k < floatCount; k++)
 			{
 				unsigned int floatAddress = floatsStartAddress + 0x4 * k;
 				float* value = ResourceUtility::Convert4ByteAddressTo8BytePointer<float>(templateEntity, floatAddress);
-
 				(*floats)[k] = *value;
 			}
-
 			properties[i].value.SetData(floats);
 		}
 		else if (strcmp(typeName, "TArray<ZGameTime>") == 0)
@@ -325,15 +247,12 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int gameTimesEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int gameTimeCount = ResourceUtility::CalculateArrayElementsCount(gameTimesStartAddress, gameTimesEndAddress, 0x8);
 			TArray<ZGameTime>* gameTimes = new TArray<ZGameTime>(gameTimeCount);
-
 			for (unsigned int k = 0; k < gameTimeCount; k++)
 			{
 				unsigned int gameTimeAddress = gameTimesStartAddress + 0x8 * k;
 				ZGameTime* gameTime = ResourceUtility::Convert4ByteAddressTo8BytePointer<ZGameTime>(templateEntity, gameTimeAddress);
-
 				(*gameTimes)[k] = *gameTime;
 			}
-
 			properties[i].value.SetData(gameTimes);
 		}
 		else if (strcmp(typeName, "TArray<SVector2>") == 0)
@@ -342,15 +261,12 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int vectorsEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int vectorCount = ResourceUtility::CalculateArrayElementsCount(vectorsStartAddress, vectorsEndAddress, 0x8);
 			TArray<SVector2>* vectors = new TArray<SVector2>(vectorCount);
-
 			for (unsigned int k = 0; k < vectorCount; k++)
 			{
 				const unsigned int vectorAddress = vectorsStartAddress + 0x8 * k;
 				SVector2* vector = ResourceUtility::Convert4ByteAddressTo8BytePointer<SVector2>(templateEntity, vectorAddress);
-
 				(*vectors)[k] = *vector;
 			}
-
 			properties[i].value.SetData(vectors);
 		}
 		else if (strcmp(typeName, "TArray<bool>") == 0)
@@ -359,15 +275,12 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int boolsEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int boolCount = ResourceUtility::CalculateArrayElementsCount(boolsStartAddress, boolsEndAddress, 0x1);
 			TArray<bool>* bools = new TArray<bool>(boolCount);
-
 			for (unsigned int k = 0; k < boolCount; k++)
 			{
 				const unsigned int boolAddress = boolsStartAddress + 0x1 * k;
 				bool* value = ResourceUtility::Convert4ByteAddressTo8BytePointer<bool>(templateEntity, boolAddress);
-
 				(*bools)[k] = (*value);
 			}
-
 			properties[i].value.SetData(bools);
 		}
 		else if (strcmp(typeName, "TArray<ZSharedSensorDef.SVisibilitySetting>") == 0)
@@ -376,15 +289,12 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int visibilitySettingsEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int visibilitySettingCount = ResourceUtility::CalculateArrayElementsCount(visibilitySettingsStartAddress, visibilitySettingsEndAddress, 0x24);
 			TArray<ZSharedSensorDef::SVisibilitySetting>* visibilitySettings = new TArray<ZSharedSensorDef::SVisibilitySetting>(visibilitySettingCount);
-
 			for (unsigned int k = 0; k < visibilitySettingCount; k++)
 			{
 				const unsigned int visibilitySettingAddress = visibilitySettingsStartAddress + 0x24 * k;
 				ZSharedSensorDef::SVisibilitySetting* visibilitySetting = ResourceUtility::Convert4ByteAddressTo8BytePointer<ZSharedSensorDef::SVisibilitySetting>(templateEntity, visibilitySettingAddress);
-
 				(*visibilitySettings)[k] = *visibilitySetting;
 			}
-
 			properties[i].value.SetData(visibilitySettings);
 		}
 		else if (strcmp(typeName, "TArray<ZString>") == 0)
@@ -393,18 +303,14 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int stringsEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int stringCount = ResourceUtility::CalculateArrayElementsCount(stringsStartAddress, stringsEndAddress, 0x8);
 			TArray<ZString>* strings = new TArray<ZString>(stringCount);
-
 			for (unsigned int k = 0; k < stringCount; k++)
 			{
 				const unsigned int stringAddress = stringsStartAddress + 0x8 * k;
 				ZString* string = ResourceUtility::Convert4ByteAddressTo8BytePointer<ZString>(templateEntity, stringAddress);
-
 				const unsigned int charsAddress = *(reinterpret_cast<unsigned int*>(string) + 1);
 				const char* chars = ResourceUtility::Convert4ByteAddressTo8BytePointer<const char>(templateEntity, charsAddress);
-
 				(*strings)[k] = ZString(chars);
 			}
-
 			properties[i].value.SetData(strings);
 		}
 		else if (strcmp(typeName, "TArray<SSettingsParamMultiplier>") == 0)
@@ -413,15 +319,12 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int settingsParamMultipliersEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int settingsParamMultiplierCount = ResourceUtility::CalculateArrayElementsCount(settingsParamMultipliersStartAddress, settingsParamMultipliersEndAddress, 0x8);
 			TArray<SSettingsParamMultiplier>* settingsParamMultipliers = new TArray<SSettingsParamMultiplier>(settingsParamMultiplierCount);
-
 			for (unsigned int k = 0; k < settingsParamMultiplierCount; k++)
 			{
 				const unsigned int settingsParamMultiplierAddress = settingsParamMultipliersStartAddress + 0x8 * k;
 				SSettingsParamMultiplier* settingsParamMultiplier = ResourceUtility::Convert4ByteAddressTo8BytePointer<SSettingsParamMultiplier>(templateEntity, settingsParamMultiplierAddress);
-
 				(*settingsParamMultipliers)[k] = *settingsParamMultiplier;
 			}
-
 			properties[i].value.SetData(settingsParamMultipliers);
 		}
 		else if (strcmp(typeName, "TArray<SColorRGB>") == 0)
@@ -430,15 +333,12 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int colorsEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int colorCount = ResourceUtility::CalculateArrayElementsCount(colorsStartAddress, colorsEndAddress, 0xC);
 			TArray<SColorRGB>* colors = new TArray<SColorRGB>(colorCount);
-
 			for (unsigned int k = 0; k < colorCount; k++)
 			{
 				const unsigned int colorAddress = colorsStartAddress + 0xC * k;
 				SColorRGB* colorRGB = ResourceUtility::Convert4ByteAddressTo8BytePointer<SColorRGB>(templateEntity, colorAddress);
-
 				(*colors)[k] = *colorRGB;
 			}
-
 			properties[i].value.SetData(colors);
 		}
 		else if (strcmp(typeName, "TArray<ECameraState>") == 0)
@@ -447,28 +347,22 @@ void TemplateEntity::ParseProperties(void* templateEntity, const unsigned int pr
 			const unsigned int cameraStatesEndAddress = *(reinterpret_cast<unsigned int*>(data) + 1);
 			const unsigned int cameraStateCount = ResourceUtility::CalculateArrayElementsCount(cameraStatesStartAddress, cameraStatesEndAddress, 0x4);
 			TArray<ECameraState>* cameraStates = new TArray<ECameraState>(cameraStateCount);
-
 			for (unsigned int k = 0; k < cameraStateCount; k++)
 			{
 				const unsigned int cameraStateAddress = cameraStatesStartAddress + 0x4 * k;
 				ECameraState* cameraState = ResourceUtility::Convert4ByteAddressTo8BytePointer<ECameraState>(templateEntity, cameraStateAddress);
-
 				(*cameraStates)[k] = *cameraState;
 			}
-
 			properties[i].value.SetData(cameraStates);
 		}
 		else
 		{
 			void* data2 = operator new(type->GetTypeSize());
-
 			memcpy(data2, data, type->GetTypeSize());
-
 			properties[i].value.SetData(data2);
 		}
 	}
 }
-
 std::shared_ptr<STemplateEntity> TemplateEntity::GetTemplateEntity()
 {
 	return templateEntity;

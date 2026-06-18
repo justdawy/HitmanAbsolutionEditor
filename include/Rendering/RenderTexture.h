@@ -1,10 +1,7 @@
 #pragma once
-
 #include <d3d11.h>
-
 #include "Resources/RenderMaterialInstance.h"
 #include "Math/Color.h"
-
 class RenderTexture
 {
 public:
@@ -14,7 +11,6 @@ public:
 		UAV = 2,
 		RenderTarget = 4
 	};
-
 	RenderTexture() = default;
 	RenderTexture(const float width, const float height, const DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM, const unsigned int flags = 0, const Color* color = nullptr);
 	RenderTexture(const RenderMaterialInstance::Texture& texture);
@@ -50,7 +46,6 @@ public:
 	void SetAsRendererTarget();
 	void ClearRenderTarget(const float* bgColor);
 	static HRESULT GetSurfaceInfo(size_t width, size_t height, DXGI_FORMAT fmt, size_t* outNumBytes, size_t* outRowBytes, size_t* outNumRows);
-
 private:
 	std::string name;
 	unsigned int width;

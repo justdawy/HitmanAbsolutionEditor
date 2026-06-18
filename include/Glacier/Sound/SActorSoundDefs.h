@@ -1,5 +1,4 @@
 #pragma once
-
 struct SActorSoundDefs
 {
 	enum class EDefinition

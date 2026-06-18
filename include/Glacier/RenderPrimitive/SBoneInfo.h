@@ -1,5 +1,4 @@
 #pragma once
-
 struct SBoneInfo
 {
 	unsigned short nTotalSize;

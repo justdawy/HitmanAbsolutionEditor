@@ -1,40 +1,28 @@
 #include "Glacier/ReasoningGrid/SGWaypoint.h"
 #include "Glacier/Serializer/ZBinarySerializer.h"
-
 void SGWaypoint::SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer)
 {
 	writer.StartObject();
-
 	writer.String("nNeighbor0");
 	writer.Int(nNeighbor0);
-
 	writer.String("nNeighbor1");
 	writer.Int(nNeighbor1);
-
 	writer.String("nNeighbor2");
 	writer.Int(nNeighbor2);
-
 	writer.String("nNeighbor3");
 	writer.Int(nNeighbor3);
-
 	writer.String("nNeighbor4");
 	writer.Int(nNeighbor4);
-
 	writer.String("nNeighbor5");
 	writer.Int(nNeighbor5);
-
 	writer.String("nNeighbor6");
 	writer.Int(nNeighbor6);
-
 	writer.String("nNeighbor7");
 	writer.Int(nNeighbor7);
-
 	writer.String("vPos");
 	vPos.SerializeToJson(writer);
-
 	writer.EndObject();
 }
-
 void SGWaypoint::SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset)
 {
 	unsigned int neighbor0Offset = offset + offsetof(SGWaypoint, nNeighbor0);
@@ -46,7 +34,6 @@ void SGWaypoint::SerializeToMemory(ZBinarySerializer& binarySerializer, const un
 	unsigned int neighbor6Offset = offset + offsetof(SGWaypoint, nNeighbor6);
 	unsigned int neighbor7Offset = offset + offsetof(SGWaypoint, nNeighbor7);
 	unsigned int posOffset = offset + offsetof(SGWaypoint, vPos);
-
 	binarySerializer.WriteToMemory(&nNeighbor0, sizeof(short), neighbor0Offset);
 	binarySerializer.WriteToMemory(&nNeighbor1, sizeof(short), neighbor1Offset);
 	binarySerializer.WriteToMemory(&nNeighbor2, sizeof(short), neighbor2Offset);
@@ -57,7 +44,6 @@ void SGWaypoint::SerializeToMemory(ZBinarySerializer& binarySerializer, const un
 	binarySerializer.WriteToMemory(&nNeighbor7, sizeof(short), neighbor7Offset);
 	vPos.SerializeToMemory(binarySerializer, posOffset);
 }
-
 void SGWaypoint::DeserializeFromJson(SGWaypoint& gWaypoint, const rapidjson::Value& object)
 {
 	gWaypoint.nNeighbor0 = object["nNeighbor0"].GetInt();

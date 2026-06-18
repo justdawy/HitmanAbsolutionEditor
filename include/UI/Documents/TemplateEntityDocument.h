@@ -1,8 +1,6 @@
 #pragma once
-
 #include "Document.h"
 #include "Resources/TemplateEntity.h"
-
 class TemplateEntityDocument : public Document
 {
 public:
@@ -10,7 +8,6 @@ public:
 	void CreateLayout(const ImGuiID dockspaceID, const ImVec2 dockspaceSize) override;
 	std::shared_ptr<TemplateEntity> GetTemplateEntity() const;
 	void RenderMenuBar() override;
-
 private:
 	std::shared_ptr<TemplateEntity> templateEntity;
 };

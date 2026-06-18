@@ -1,7 +1,5 @@
 #pragma once
-
 #include <type_traits>
-
 class EnumUtility
 {
 public:
@@ -9,7 +7,6 @@ public:
 	static constexpr bool HasFlag(Enum flag, Enum value)
 	{
 		using T = std::underlying_type_t<Enum>;
-
 		return static_cast<T>(flag) & static_cast<T>(value);
 	}
 };

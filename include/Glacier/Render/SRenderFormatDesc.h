@@ -1,5 +1,4 @@
 #pragma once
-
 struct SRenderFormatDesc
 {
 	unsigned int nBlockWidth;

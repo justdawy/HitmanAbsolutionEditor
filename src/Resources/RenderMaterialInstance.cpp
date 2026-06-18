@@ -2,12 +2,10 @@
 #include "Registry/ResourceInfoRegistry.h"
 #include "Logger.h"
 #include "Resources/Texture.h"
-
 void RenderMaterialInstance::Property::SerializeToJson(const std::vector<std::shared_ptr<Resource>>& references, rapidjson::Value& propertyObject, rapidjson::Document::AllocatorType& allocator)
 {
 	const std::string& propertyName = materialPropertyNames[propertyInfo.lName];
 	const PROPERTY_TYPE propertyType = static_cast<PROPERTY_TYPE>(propertyInfo.lType);
-
 	switch (propertyType)
 	{
 		case PROPERTY_TYPE::PT_FLOAT:
@@ -25,32 +23,26 @@ void RenderMaterialInstance::Property::SerializeToJson(const std::vector<std::sh
 			if (propertyInfo.lName == 'TXID')
 			{
 				std::string textureResourceID;
-
 				if (uint32Value != -1)
 				{
 					textureResourceID = references[uint32Value]->GetResourceID();
 				}
-
 				propertyObject.AddMember(rapidjson::Value(propertyName.c_str(), allocator).Move(), rapidjson::Value(textureResourceID.c_str(), allocator).Move(), allocator);
 			}
 			else
 			{
 				propertyObject.AddMember(rapidjson::Value(propertyName.c_str(), allocator).Move(), uint32Value, allocator);
 			}
-
 			break;
 		}
 		case PROPERTY_TYPE::PT_LIST:
 		{
 			rapidjson::Value childObject;
-
 			childObject.SetObject();
-
 			for (size_t i = 0; i < childProperties.size(); ++i)
 			{
 				childProperties[i].SerializeToJson(references, childObject, allocator);
 			}
-
 			if (propertyObject.HasMember(propertyName.c_str()))
 			{
 				propertyObject[propertyName.c_str()].GetArray().PushBack(childObject, allocator);
@@ -58,18 +50,14 @@ void RenderMaterialInstance::Property::SerializeToJson(const std::vector<std::sh
 			else
 			{
 				rapidjson::Value array;
-
 				array.SetArray();
 				array.PushBack(childObject, allocator);
-
 				propertyObject.AddMember(rapidjson::Value(propertyName.c_str(), allocator).Move(), array, allocator);
 			}
-
 			break;
 		}
 	}
 }
-
 RenderMaterialInstance::RenderMaterialInstance()
 {
 	if (materialPropertyNames.empty())
@@ -108,25 +96,17 @@ RenderMaterialInstance::RenderMaterialInstance()
 		materialPropertyNames.insert(std::make_pair('ZOFF', "Z Offset"));
 	}
 }
-
 void RenderMaterialInstance::Deserialize()
 {
 	BinaryReader binaryReader = BinaryReader(resourceData, resourceDataSize);
 	const unsigned int materialInfoOffset = binaryReader.Read<unsigned int>();
-
 	binaryReader.Seek(materialInfoOffset, SeekOrigin::Begin);
-
 	materialPropertyList = binaryReader.Read<SRMaterialPropertyList>();
-
 	binaryReader.Seek(materialPropertyList.lMaterialClassType, SeekOrigin::Begin);
-
 	materialClassType = binaryReader.ReadString();
-
 	ReadProperty(instanceProperty, binaryReader, materialPropertyList.lPropertyList);
-
 	isResourceDeserialized = true;
 }
-
 void RenderMaterialInstance::Export(const std::string& outputPath, const std::string& exportOption)
 {
 	if (exportOption.starts_with("Raw"))
@@ -138,55 +118,37 @@ void RenderMaterialInstance::Export(const std::string& outputPath, const std::st
 		SerializeToJson(outputPath);
 	}
 }
-
 void RenderMaterialInstance::SerializeToJson(const std::string& outputFilePath)
 {
 	std::vector<std::shared_ptr<Resource>>& references = GetReferences();
 	rapidjson::Document document;
 	rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
-
 	document.SetObject();
-
 	materialPropertyList.SerializeToJson(materialClassType, references, document);
-
 	rapidjson::Value object;
-
 	object.SetObject();
-
 	instanceProperty.SerializeToJson(references, object, allocator);
-
 	document.AddMember("material", object, allocator);
-
 	rapidjson::StringBuffer stringBuffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(stringBuffer);
-
 	document.Accept(writer);
-
 	std::ofstream outputFileStream = std::ofstream(outputFilePath);
-
 	outputFileStream << stringBuffer.GetString();
-
 	outputFileStream.close();
 }
-
 SRMaterialPropertyList& RenderMaterialInstance::GetMaterialPropertyList()
 {
 	return materialPropertyList;
 }
-
 std::string& RenderMaterialInstance::GetMaterialClassType()
 {
 	return materialClassType;
 }
-
 void RenderMaterialInstance::ReadProperty(Property& property, BinaryReader& binaryReader, const unsigned int propertyOffset)
 {
 	binaryReader.Seek(propertyOffset, SeekOrigin::Begin);
-
 	property.propertyInfo = binaryReader.Read<SProperty>();
-
 	const PROPERTY_TYPE propertyType = static_cast<PROPERTY_TYPE>(property.propertyInfo.lType);
-
 	switch (propertyType)
 	{
 		case PROPERTY_TYPE::PT_FLOAT:
@@ -198,18 +160,14 @@ void RenderMaterialInstance::ReadProperty(Property& property, BinaryReader& bina
 			else
 			{
 				binaryReader.Seek(property.propertyInfo.lData, SeekOrigin::Begin);
-
 				property.floatValue = binaryReader.Read<float>();
 			}
-
 			break;
 		}
 		case PROPERTY_TYPE::PT_CHAR:
 		{
 			binaryReader.Seek(property.propertyInfo.lData, SeekOrigin::Begin);
-
 			property.stringValue = binaryReader.ReadString();
-
 			break;
 		}
 		case PROPERTY_TYPE::PT_UINT32:
@@ -221,39 +179,29 @@ void RenderMaterialInstance::ReadProperty(Property& property, BinaryReader& bina
 			else
 			{
 				binaryReader.Seek(property.propertyInfo.lData, SeekOrigin::Begin);
-
 				property.uint32Value = binaryReader.Read<unsigned int>();
 			}
-
 			break;
 		}
 		case PROPERTY_TYPE::PT_LIST:
 		{
 			unsigned int childPropertyOffset = property.propertyInfo.lData;
-
 			property.childProperties.reserve(property.propertyInfo.lSize);
-
 			for (unsigned int i = 0; i < property.propertyInfo.lSize; ++i)
 			{
 				Property childProperty;
-
 				ReadProperty(childProperty, binaryReader, childPropertyOffset);
-
 				property.childProperties.push_back(childProperty);
-
 				childPropertyOffset += sizeof(SProperty);
 			}
-
 			break;
 		}
 	}
 }
-
 RenderMaterialInstance::Property& RenderMaterialInstance::GetInstanceProperty()
 {
 	return instanceProperty;
 }
-
 void RenderMaterialInstance::GetTextures(std::shared_ptr<Resource> matiResource, std::vector<RenderMaterialInstance::Texture>& textures)
 {
 	bool foundNormalTexture = false;
@@ -261,22 +209,17 @@ void RenderMaterialInstance::GetTextures(std::shared_ptr<Resource> matiResource,
 	bool foundSpecularTexture = false;
 	bool foundEmissiveTexture = false;
 	bool foundAlphaTexture = false;
-
 	GetTextures(instanceProperty, matiResource, textures, foundNormalTexture, foundDiffuseTexture, foundSpecularTexture, foundEmissiveTexture);
-
 	std::vector<std::shared_ptr<Resource>>& matiReferences = matiResource->GetReferences();
-
 	if (!foundNormalTexture || !foundDiffuseTexture || !foundSpecularTexture)
 	{
 		for (size_t i = 0; i < matiReferences.size(); ++i)
 		{
 			std::shared_ptr<Resource> reference = matiReferences[i];
 			const ResourceInfoRegistry::ResourceInfo& referenceInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(reference->GetHash());
-
 			if (referenceInfo.type == "TEXT")
 			{
 				Texture texture{};
-
 				if (!foundNormalTexture && referenceInfo.resourceID.contains("/normal"))
 				{
 					texture.type = Texture::Type::Normal;
@@ -307,7 +250,6 @@ void RenderMaterialInstance::GetTextures(std::shared_ptr<Resource> matiResource,
 					texture.textureReferenceIndex = i;
 					foundAlphaTexture = true;
 				}
-
 				if (texture.type != Texture::Type::Unknown)
 				{
 					textures.push_back(texture);
@@ -315,44 +257,35 @@ void RenderMaterialInstance::GetTextures(std::shared_ptr<Resource> matiResource,
 			}
 		}
 	}
-
 	if (!foundNormalTexture)
 	{
 		Logger::GetInstance().Log(Logger::Level::Warning, "Normal texture not found!");
 	}
-
 	if (!foundDiffuseTexture)
 	{
 		Logger::GetInstance().Log(Logger::Level::Warning, "Diffuse texture not found!");
 	}
-
 	if (!foundSpecularTexture)
 	{
 		Logger::GetInstance().Log(Logger::Level::Warning, "Specular texture not found!");
 	}
-
 	if (!foundEmissiveTexture)
 	{
 		Logger::GetInstance().Log(Logger::Level::Warning, "Emissive texture not found!");
 	}
-
 	if (!foundAlphaTexture)
 	{
 		Logger::GetInstance().Log(Logger::Level::Warning, "Alpha texture not found!");
 	}
 }
-
 void RenderMaterialInstance::GetTextures(const Property& property, std::shared_ptr<Resource> matiResource, std::vector<Texture>& textures, bool& foundNormalTexture, bool& foundDiffuseTexture, bool& foundSpecularTexture, bool& foundEmissiveTexture)
 {
 	bool isTextureProperty = false;
-
 	if (property.propertyInfo.lName == 'TEXT')
 	{
 		isTextureProperty = true;
 	}
-
 	Texture texture{};
-
 	for (size_t i = 0; i < property.childProperties.size(); ++i)
 	{
 		if (isTextureProperty)
@@ -381,7 +314,6 @@ void RenderMaterialInstance::GetTextures(const Property& property, std::shared_p
 				texture.type = Texture::Type::Emissive;
 				foundEmissiveTexture = true;
 			}
-
 			if (property.childProperties[i].propertyInfo.lName == 'TXID')
 			{
 				if (property.childProperties[i].uint32Value != -1)
@@ -409,16 +341,13 @@ void RenderMaterialInstance::GetTextures(const Property& property, std::shared_p
 				}
 			}
 		}
-
 		GetTextures(property.childProperties[i], matiResource, textures, foundNormalTexture, foundDiffuseTexture, foundSpecularTexture, foundEmissiveTexture);
 	}
-
 	if (texture.type != Texture::Type::Unknown && texture.textureReferenceIndex != -1)
 	{
 		textures.push_back(texture);
 	}
 }
-
 std::unordered_map<unsigned int, std::string>& RenderMaterialInstance::GetMaterialPropertyNames()
 {
 	return materialPropertyNames;

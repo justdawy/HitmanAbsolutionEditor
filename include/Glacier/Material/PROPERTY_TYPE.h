@@ -1,5 +1,4 @@
 #pragma once
-
 enum class PROPERTY_TYPE
 {
 	PT_FLOAT = 0,

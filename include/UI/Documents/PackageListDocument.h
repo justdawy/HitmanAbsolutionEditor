@@ -1,8 +1,6 @@
 #pragma once
-
 #include "Document.h"
 #include "Resources/PackageList.h"
-
 class PackageListDocument : public Document
 {
 public:
@@ -10,7 +8,6 @@ public:
 	void CreateLayout(const ImGuiID dockspaceID, const ImVec2 dockspaceSize) override;
 	std::shared_ptr<PackageList> GetPackageList() const;
 	void RenderMenuBar() override;
-
 private:
 	std::shared_ptr<PackageList> packageList;
 };

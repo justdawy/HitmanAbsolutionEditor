@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ETypeInfoFlags
 {
     ETYPEINFOFLAG_TENTITYREF = 1,
@@ -10,7 +9,6 @@ enum class ETypeInfoFlags
     ETYPEINFOFLAG_ARRAYTYPE = 32,
     ETYPEINFOFLAG_FIXEDARRAYTYPE = 64
 };
-
 inline ETypeInfoFlags operator&(ETypeInfoFlags lhs, ETypeInfoFlags rhs)
 {
     return static_cast<ETypeInfoFlags>(static_cast<int>(lhs) & static_cast<int>(rhs));

@@ -1,5 +1,4 @@
 #pragma once
-
 enum class EActorPerceptionSensitivity
 {
     APS_AMBIENT_DEAFBLIND = 0,

@@ -1,92 +1,48 @@
 #include "imgui_internal.h"
-
 #include <IconsMaterialDesignIcons.h>
-
 #include "Rendering/ImGuiRenderer.h"
 #include "Allocation.h"
 #include "Logger.h"
 #include "Rendering/DirectXRenderer.h"
 #include "Editor.h"
-
 bool ImGuiRenderer::Setup(HWND hwnd)
 {
-    // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-    //io.ConfigViewportsNoAutoMerge = true;
-    //io.ConfigViewportsNoTaskBarIcon = true;
-    //io.ConfigViewportsNoDefaultParent = true;
-    //io.ConfigDockingAlwaysTabBar = true;
-    //io.ConfigDockingTransparentPayload = true;
-    //io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;     // FIXME-DPI: Experimental. THIS CURRENTLY DOESN'T WORK AS EXPECTED. DON'T USE IN USER APP!
-    //io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports; // FIXME-DPI: Experimental.
-
-    // Setup Dear ImGui style
-    //ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
-
-    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
-
-    // Setup Platform/Renderer backends
     if (!ImGui_ImplWin32_Init(hwnd))
     {
         return false;
     }
-
     if (!ImGui_ImplDX11_Init(Editor::GetInstance().GetDirectXRenderer()->GetD3D11Device(), Editor::GetInstance().GetDirectXRenderer()->GetD3D11DeviceContext()))
     {
         return false;
     }
-
-    // Load Fonts
-    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-    // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-    // - Read 'docs/FONTS.md' for more instructions and details.
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != NULL);
-
     SetStyle();
     SetFont();
-
     io.IniFilename = nullptr;
-
     Logger::GetInstance().Log(Logger::Level::Info, "ImGui renderer successfully set up.");
-
     return true;
 }
-
 void ImGuiRenderer::Cleanup()
 {
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 }
-
 void ImGuiRenderer::SetStyle()
 {
     ImGuiStyle* style = &ImGui::GetStyle();
     ImVec4* colors = style->Colors;
-
     colors[ImGuiCol_Text] = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
     colors[ImGuiCol_TextDisabled] = ImVec4(0.42f, 0.42f, 0.42f, 1.00f);
     colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
@@ -142,11 +98,9 @@ void ImGuiRenderer::SetStyle()
     colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
     colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
     colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
-
     style->AntiAliasedFill = true;
     style->AntiAliasedLines = true;
     style->AntiAliasedLinesUseTex = true;
-
     style->WindowPadding = ImVec2(8.0f, 4.0f);
     style->FramePadding = ImVec2(4.0f, 6.0f);
     style->TabMinWidthForCloseButton = 0.1f;
@@ -157,13 +111,11 @@ void ImGuiRenderer::SetStyle()
     style->IndentSpacing = 12;
     style->ScrollbarSize = 14;
     style->GrabMinSize = 10;
-
     style->WindowBorderSize = 1.0f;
     style->ChildBorderSize = 0.0f;
     style->PopupBorderSize = 1.5f;
     style->FrameBorderSize = 0.5f;
     style->TabBorderSize = 0.0f;
-
     style->WindowRounding = 6.0f;
     style->ChildRounding = 0.0f;
     style->FrameRounding = 2.0f;
@@ -172,103 +124,79 @@ void ImGuiRenderer::SetStyle()
     style->GrabRounding = 2.0f;
     style->LogSliderDeadzone = 4.0f;
     style->TabRounding = 3.0f;
-
     style->WindowTitleAlign = ImVec2(0.0f, 0.5f);
     style->WindowMenuButtonPosition = ImGuiDir_None;
     style->ColorButtonPosition = ImGuiDir_Left;
     style->ButtonTextAlign = ImVec2(0.5f, 0.5f);
     style->SelectableTextAlign = ImVec2(0.0f, 0.0f);
     style->DisplaySafeAreaPadding = ImVec2(8.0f, 8.0f);
-
     ImGuiColorEditFlags colorEditFlags = ImGuiColorEditFlags_AlphaBar
         | ImGuiColorEditFlags_AlphaPreviewHalf
         | ImGuiColorEditFlags_DisplayRGB
         | ImGuiColorEditFlags_InputRGB
         | ImGuiColorEditFlags_PickerHueBar
         | ImGuiColorEditFlags_Uint8;
-
     ImGui::SetColorEditOptions(colorEditFlags);
 }
-
 void ImGuiRenderer::AddIconFont(float fontSize)
 {
     ImGuiIO& io = ImGui::GetIO();
-
     static constexpr ImWchar iconsRanges[] = { ICON_MIN_MDI, ICON_MAX_MDI, 0 };
     ImFontConfig iconsConfig;
-
     iconsConfig.MergeMode = true;
     iconsConfig.GlyphOffset = { 0.f, 2.f };
-
     static constexpr const char* materialIconsRegularFontPath = "assets/fonts/materialdesignicons-webfont.ttf";
-
     io.Fonts->AddFontFromFileTTF(materialIconsRegularFontPath, fontSize, &iconsConfig, iconsRanges);
 }
-
 void ImGuiRenderer::SetFont()
 {
     ImGuiIO& io = ImGui::GetIO();
     float defaultFontSize = 22.0f;
     float middleFontSize = 20.0f;
     float smallFontSize = 16.0f;
-
     constexpr const char* regularFontPath = "assets/fonts/OpenSans-Regular.ttf";
     constexpr const char* boldFontPath = "assets/fonts/OpenSans-Bold.ttf";
     constexpr const char* italicFontPath = "assets/fonts/OpenSans-Italic.ttf";
     constexpr const char* consolasRegularFontPath = "assets/fonts/Consolas Regular.ttf";
     constexpr const char* consolasBoldFontPath = "assets/fonts/Consolas Bold.ttf";
-
     defaultFont = io.Fonts->AddFontFromFileTTF(regularFontPath, defaultFontSize, nullptr, io.Fonts->GetGlyphRangesCyrillic());
     AddIconFont(defaultFontSize);
-
     middleFont = io.Fonts->AddFontFromFileTTF(regularFontPath, middleFontSize, nullptr, io.Fonts->GetGlyphRangesCyrillic());
     AddIconFont(middleFontSize);
-
     smallFont = io.Fonts->AddFontFromFileTTF(regularFontPath, smallFontSize, nullptr, io.Fonts->GetGlyphRangesCyrillic());
     AddIconFont(smallFontSize);
-
     boldFont = io.Fonts->AddFontFromFileTTF(boldFontPath, defaultFontSize, nullptr, io.Fonts->GetGlyphRangesCyrillic());
     AddIconFont(defaultFontSize);
-
     middleitalicFont = io.Fonts->AddFontFromFileTTF(italicFontPath, middleFontSize, nullptr, io.Fonts->GetGlyphRangesCyrillic());
     AddIconFont(middleFontSize);
-
     consolasRegularFont = io.Fonts->AddFontFromFileTTF(consolasRegularFontPath, middleFontSize, nullptr, io.Fonts->GetGlyphRangesCyrillic());
     consolasBoldFont = io.Fonts->AddFontFromFileTTF(consolasBoldFontPath, middleFontSize, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 }
-
 ImFont* ImGuiRenderer::GetDefaultFont()
 {
     return defaultFont;
 }
-
 ImFont* ImGuiRenderer::GetMiddleFont()
 {
     return middleFont;
 }
-
 ImFont* ImGuiRenderer::GetSmallFont()
 {
     return smallFont;
 }
-
 ImFont* ImGuiRenderer::GetBoldFont()
 {
     return boldFont;
 }
-
 ImFont* ImGuiRenderer::GetMiddleItalicFont()
 {
     return middleitalicFont;
 }
-
 ImFont* ImGuiRenderer::GetConsolasRegularFont()
 {
     return consolasRegularFont;
 }
-
 ImFont* ImGuiRenderer::GetConsolasBoldFont()
 {
     return consolasBoldFont;
 }
-

@@ -1,9 +1,6 @@
 #pragma once
-
 #include <d3d11.h>
-
 #include "Resource.h"
-
 class FlashMovie : public Resource
 {
 public:
@@ -14,7 +11,6 @@ public:
 		PNG,
 		SWF
 	};
-
 	void Export(const std::string& outputPath, const std::string& exportOption) override;
 	void GetTextureData(void*& textureData, unsigned int& textureDataSize, bool& isDDSTexture);
 	void CreateTextureFromMemory();
@@ -25,7 +21,6 @@ public:
 	ID3D11ShaderResourceView* GetTextureView() const;
 	void ImportSwf(const std::string& swfFilePath);
 	bool PatchResourceLibrary(const std::string& swfFilePath);
-
 private:
 	ID3D11Resource* texture;
 	ID3D11ShaderResourceView* textureView;

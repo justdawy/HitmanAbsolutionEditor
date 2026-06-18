@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ERenderResourceMipInterpolation
 {
 	eRENDER_RESOURCE_MIP_INTERPOLATION_NONE = 0,

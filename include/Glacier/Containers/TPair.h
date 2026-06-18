@@ -1,46 +1,35 @@
 #pragma once
-
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
-
 class ZString;
-
 template <typename TKey, typename TValue>
 class TPair
 {
 public:
 	TPair() = default;
-
 	TPair(const TKey& key, const TValue& value) : m_key(key), m_value(value)
 	{
 	}
-
 	const TKey& Key() const
 	{
 		return m_key;
 	}
-
 	const TValue& Value() const
 	{
 		return m_value;
 	}
-
 	TKey& Key()
 	{
 		return m_key;
 	}
-
 	TValue& Value()
 	{
 		return m_value;
 	}
-
 	void SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer)
 	{
 		writer.StartObject();
-
 		writer.String("m_key");
-
 		if constexpr (std::is_class_v<TKey>)
 		{
 			m_key.SerializeToJson(writer);
@@ -72,9 +61,7 @@ public:
 				writer.Bool(m_key);
 			}
 		}
-
 		writer.String("m_value");
-
 		if constexpr (std::is_class_v<TValue>)
 		{
 			m_value.SerializeToJson(writer);
@@ -106,15 +93,12 @@ public:
 				writer.Bool(m_value);
 			}
 		}
-
 		writer.EndObject();
 	}
-
 	void SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset)
 	{
 		unsigned int keyOffset = offset + offsetof(TPair, m_key);
 		unsigned int valueOffset = offset + offsetof(TPair, m_value);
-
 		if constexpr (std::is_class_v<TKey>)
 		{
 			m_key.SerializeToMemory(binarySerializer, keyOffset);
@@ -123,7 +107,6 @@ public:
 		{
 			binarySerializer.WriteToMemory(&m_key, sizeof(TKey), keyOffset);
 		}
-
 		if constexpr (std::is_class_v<TValue>)
 		{
 			m_value.SerializeToMemory(binarySerializer, valueOffset);
@@ -133,11 +116,9 @@ public:
 			binarySerializer.WriteToMemory(&m_value, sizeof(TValue), valueOffset);
 		}
 	}
-
 	static TPair* DeserializeFromJson(const rapidjson::Value& object)
 	{
 		TPair* pair = new TPair();
-
 		if constexpr (std::is_class_v<TKey>)
 		{
 			if constexpr (std::is_same_v<TKey, ZString>)
@@ -180,7 +161,6 @@ public:
 				pair->m_key = object["m_key"].GetBool();
 			}
 		}
-
 		if constexpr (std::is_class_v<TValue>)
 		{
 			pair->m_value = *TValue::DeserializeFromJson(object);
@@ -216,10 +196,8 @@ public:
 				pair->m_value = object["m_value"].GetBool();
 			}
 		}
-
 		return pair;
 	}
-
 private:
 	TKey m_key;
 	TValue m_value;

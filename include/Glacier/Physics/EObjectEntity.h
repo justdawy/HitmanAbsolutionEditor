@@ -1,5 +1,4 @@
 #pragma once
-
 enum class EObjectEntity
 {
 	EOBJECTENTITY_VOID = 0,

@@ -1,5 +1,4 @@
 #pragma once
-
 #include <iostream>
 #include <cstdint>
 #include <cassert>
@@ -8,12 +7,9 @@
 #include <unordered_map>
 #include <optional>
 #include <set>
-
 #include "../TypeInfo/STypeID.h"
 #include "IO/BinaryWriter.h"
-
 class ZVariant;
-
 class ZBinarySerializer
 {
 public:
@@ -22,38 +18,28 @@ public:
 		unsigned int type;
 		unsigned int size;
 		void* data;
-
 		Section(unsigned int type, unsigned int size, void* data);
 	};
-
 	ZBinarySerializer();
-
 	template <typename T>
 	void SerializeToMemory(T* type, void** data, unsigned int& dataSize, std::unordered_map<unsigned long long, unsigned int>* references = nullptr)
 	{
 		buffer = calloc(1, sizeof(T));
 		layoutPointer += sizeof(T);
 		capacity += sizeof(T);
-
 		type->SerializeToMemory(*this);
-
 		WriteToMemoryStream(data, dataSize, references);
 	}
-
 	template <typename T>
 	void SerializeToFile(T* type, const std::string& filePath, std::unordered_map<unsigned long long, unsigned int>* references = nullptr)
 	{
 		buffer = calloc(1, sizeof(T));
 		layoutPointer += sizeof(T);
 		capacity += sizeof(T);
-
 		type->SerializeToMemory(*this);
-
 		WriteToFileStream(filePath, references);
-
 		free(buffer);
 	}
-
 	unsigned int ReserveLayoutFor(const unsigned int count, const unsigned int typeSize, const unsigned int typeAlignment, const unsigned int headerSize, const bool useMaxAlignment = false);
 	unsigned int GetLayoutPointer();
 	unsigned char GetMaxAlignment();
@@ -74,7 +60,6 @@ public:
 	Section GenerateTypeReindexingSection();
 	Section GenerateRunimeResourceIDReindexingSection();
 	std::vector<Section> GenerateSections();
-
 private:
 	void* buffer;
 	unsigned int layoutPointer;

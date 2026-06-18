@@ -2,7 +2,6 @@
 #include "Utility/D3D11Utility.h"
 #include "Rendering/DirectXRenderer.h"
 #include "Editor.h"
-
 DepthStencilState::DepthStencilState(
     bool enableDepthWrite,
     DepthStencilState::CompareFunction depthTest,
@@ -34,20 +33,16 @@ DepthStencilState::DepthStencilState(
     this->backFacePassStencilOp = ConvertStencilOp(backFacePassStencilOp);
     this->stencilReadMask = stencilReadMask;
     this->stencilWriteMask = stencilWriteMask;
-
     CreateResource();
 }
-
 DepthStencilState::~DepthStencilState()
 {
     D3D11Utility::Release(depthStencilState);
 }
-
 ID3D11DepthStencilState* DepthStencilState::GetDepthStencilState() const
 {
     return depthStencilState;
 }
-
 D3D11_COMPARISON_FUNC DepthStencilState::ConvertCompareFunction(const CompareFunction compareFunction)
 {
     switch (compareFunction)
@@ -70,7 +65,6 @@ D3D11_COMPARISON_FUNC DepthStencilState::ConvertCompareFunction(const CompareFun
             return D3D11_COMPARISON_ALWAYS;
     };
 }
-
 D3D11_STENCIL_OP DepthStencilState::ConvertStencilOp(const StencilOp stencilOp)
 {
     switch (stencilOp)
@@ -93,17 +87,12 @@ D3D11_STENCIL_OP DepthStencilState::ConvertStencilOp(const StencilOp stencilOp)
             return D3D11_STENCIL_OP_KEEP;
     };
 }
-
 void DepthStencilState::CreateResource()
 {
     D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
-
-    //Depth part
     depthStencilDesc.DepthEnable = depthTest != D3D11_COMPARISON_ALWAYS || enableDepthWrite;
     depthStencilDesc.DepthWriteMask = enableDepthWrite ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
     depthStencilDesc.DepthFunc = depthTest;
-
-    //Stencil part
     depthStencilDesc.StencilEnable = enableFrontFaceStencil || enableBackFaceStencil;
     depthStencilDesc.StencilReadMask = stencilReadMask;
     depthStencilDesc.StencilWriteMask = stencilWriteMask;
@@ -111,7 +100,6 @@ void DepthStencilState::CreateResource()
     depthStencilDesc.FrontFace.StencilFailOp = frontFaceStencilFailStencilOp;
     depthStencilDesc.FrontFace.StencilDepthFailOp = frontFaceDepthFailStencilOp;
     depthStencilDesc.FrontFace.StencilPassOp = frontFacePassStencilOp;
-
     if (enableBackFaceStencil)
     {
         depthStencilDesc.BackFace.StencilFunc = backFaceStencilTest;
@@ -123,10 +111,8 @@ void DepthStencilState::CreateResource()
     {
         depthStencilDesc.BackFace = depthStencilDesc.FrontFace;
     }
-
     ID3D11Device* d3dDevice = Editor::GetInstance().GetDirectXRenderer()->GetD3D11Device();
     HRESULT result = d3dDevice->CreateDepthStencilState(&depthStencilDesc, &depthStencilState);
-
     if (FAILED(result))
     {
         Logger::GetInstance().Log(Logger::Level::Error, "Failed to create depth stencil state!");

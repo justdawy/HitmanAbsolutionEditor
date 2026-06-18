@@ -1,5 +1,4 @@
 #pragma once
-
 enum EWaveBankMemoryLoadRTType
 {
 	WAVEBANKRT_RAM = 0,

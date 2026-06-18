@@ -1,5 +1,4 @@
 #pragma once
-
 enum EMusicPlaylistPlayType
 {
 	EMusicPlaylistPlayType_First = 0,

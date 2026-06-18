@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ECameraState
 {
     eCamSneakStand = 0,

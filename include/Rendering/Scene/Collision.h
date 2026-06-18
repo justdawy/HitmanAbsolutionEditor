@@ -1,8 +1,6 @@
 #pragma once
-
 #include "Component.h"
 #include "Mesh.h"
-
 class Collision : public Component
 {
 public:
@@ -17,7 +15,6 @@ public:
 	static void CreateCapsuleMesh(NxShapeDesc* shapeDescriptor, std::shared_ptr<Mesh> capsuleMesh);
 	static void CreateConvexMesh(NxShapeDesc* shapeDescriptor, std::shared_ptr<Mesh> convexMesh);
 	static void CreateTriangleMesh(NxShapeDesc* shapeDescriptor, std::shared_ptr<Mesh> triangleMesh);
-
 private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 };

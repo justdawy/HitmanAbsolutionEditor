@@ -1,8 +1,6 @@
 #pragma once
-
 #include "BasePanel.h"
 #include "Logger.h"
-
 class ConsolePanel : public BasePanel
 {
 public:
@@ -13,12 +11,10 @@ public:
 	void FilterMessages(const std::vector<Logger::Message>& messages, std::vector<Logger::Message>& filteredMessages);
 	ImColor GetTextColor(const Logger::Level level);
 	static void CopyToClipboard(const std::string& string);
-
 private:
 	const char* types[4] = { "All", "Editor", "SDK", "Pipe" };
 	const char* currentType;
 	char message[256]{ "" };
-
 	ImColor errorIconColor;
 	ImColor warningIconColor;
 	ImColor infoIconColor;

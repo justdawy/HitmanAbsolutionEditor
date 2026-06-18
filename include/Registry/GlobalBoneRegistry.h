@@ -1,8 +1,6 @@
 #pragma once
-
 #include <unordered_map>
 #include <string>
-
 class GlobalBoneRegistry
 {
 public:
@@ -10,12 +8,10 @@ public:
 	void Load();
 	unsigned int GetBoneID(const std::string& boneName);
 	unsigned int RegisterBoneID(const std::string& boneName);
-
 private:
 	GlobalBoneRegistry() = default;
 	GlobalBoneRegistry(const GlobalBoneRegistry& other) = delete;
 	GlobalBoneRegistry& operator=(const GlobalBoneRegistry& other) = delete;
-
 	std::unordered_map<std::string, unsigned int> boneNameToGlobalIDMap;
 	const char* boneNames[63] =
 	{

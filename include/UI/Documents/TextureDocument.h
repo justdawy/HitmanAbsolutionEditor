@@ -1,8 +1,6 @@
 #pragma once
-
 #include "Document.h"
 #include "Resources/Texture.h"
-
 class TextureDocument : public Document
 {
 public:
@@ -11,11 +9,9 @@ public:
 	std::shared_ptr<Texture> GetTexture() const;
 	void RenderMenuBar() override;
 	void RenderToolBar() override;
-
 private:
 	void RenderZoomPercentageText() const;
 	void RenderRGBAChannelButtons() const;
-
 	std::shared_ptr<Texture> texture;
 	float sliderValue;
 };

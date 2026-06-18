@@ -1,5 +1,4 @@
 #pragma once
-
 struct SColiBox
 {
 	unsigned char min[3];

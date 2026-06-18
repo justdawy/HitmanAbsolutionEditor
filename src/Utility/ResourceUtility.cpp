@@ -52,7 +52,6 @@
 #include "Resources/RenderPrimitive.h"
 #include "Resources/RenderBink.h"
 #include "Registry/ResourceInfoRegistry.h"
-
 std::string ResourceUtility::ConvertResourceIDToFilePath(const std::string& resourceID)
 {
     std::string resourceID2 = StringUtility::ToLowerCase(resourceID);
@@ -61,7 +60,6 @@ std::string ResourceUtility::ConvertResourceIDToFilePath(const std::string& reso
     const int index2 = static_cast<int>(resourceID2.find('?'));
     const int index3 = static_cast<int>(resourceID2.find(']'));
     std::string folderPath = Settings::GetInstance().GetRuntimeFolderPath();
-
     if (index2 != -1 && index < index2)
     {
         folderPath += resourceID2.substr(index + 1, index2 - index - 1);
@@ -70,70 +68,55 @@ std::string ResourceUtility::ConvertResourceIDToFilePath(const std::string& reso
     {
         folderPath += resourceID2.substr(index + 1, index3 - index - 1);
     }
-
     resourceID2 = resourceID2.substr(0, resourceID2.find_last_of('.') + 1);
-
     Hash::MD5Hash md5Hash = Hash::MD5(resourceID2);
     std::string fileName = Hash::ConvertMD5ToString(md5Hash);
-
     return std::format("{}/{}.{}", folderPath, fileName, extension);
 }
-
 std::string ResourceUtility::FindDLCFilePath(const std::string& resourceID)
 {
     const std::string extension = resourceID.substr(resourceID.find_last_of('.') + 1);
     std::string resourceID2 = StringUtility::ToLowerCase(resourceID);
     resourceID2 = resourceID2.substr(0, resourceID2.find_last_of('.') + 1);
-
     Hash::MD5Hash md5Hash = Hash::MD5(resourceID2);
     std::string fileName = Hash::ConvertMD5ToString(md5Hash);
     const std::string dlcFolderPath = std::format("{}\\DLC", Settings::GetInstance().GetRuntimeFolderPath());
-
     for (auto& p : std::filesystem::recursive_directory_iterator(dlcFolderPath))
     {
         if (!p.path().string().ends_with(extension))
         {
             continue;
         }
-
         if (p.path().string().contains(fileName))
         {
             return p.path().string();
         }
     }
-
     return "";
 }
-
 std::string ResourceUtility::ConvertResourceReferenceFlagsToString(const EResourceReferenceFlags resourceReferenceFlags)
 {
     std::string flags;
-
     if ((resourceReferenceFlags & EResourceReferenceFlags::RESOURCE_REFERENCE_TYPE_OF_STREAMING_ENTITY) == EResourceReferenceFlags::RESOURCE_REFERENCE_TYPE_OF_STREAMING_ENTITY)
     {
         flags += "Type Of Streaming Entity, ";
     }
-
     if ((resourceReferenceFlags & EResourceReferenceFlags::RESOURCE_REFERENCE_STATE_STREAMED) == EResourceReferenceFlags::RESOURCE_REFERENCE_STATE_STREAMED)
     {
         flags += "State Streamed, ";
     }
-
     if ((resourceReferenceFlags & EResourceReferenceFlags::RESOURCE_REFERENCE_MEDIA_STREAMED) == EResourceReferenceFlags::RESOURCE_REFERENCE_MEDIA_STREAMED)
     {
         flags += "Media Streamed, ";
     }
-
     if ((resourceReferenceFlags & EResourceReferenceFlags::RESOURCE_REFERENCE_INSTALL_DEPENDENCY) == EResourceReferenceFlags::RESOURCE_REFERENCE_INSTALL_DEPENDENCY)
     {
         flags += "Install Dependency, ";
     }
-
     if ((resourceReferenceFlags & EResourceReferenceFlags::RESOURCE_REFERENCE_CYCLIC) == EResourceReferenceFlags::RESOURCE_REFERENCE_CYCLIC)
     {
         flags += "Cyclic";
     }
-
     if (flags.empty())
     {
         flags = "No Flags";
@@ -142,39 +125,31 @@ std::string ResourceUtility::ConvertResourceReferenceFlagsToString(const EResour
     {
         flags = flags.erase(flags.length() - 2, 2);
     }
-
     return flags;
 }
-
 std::string ResourceUtility::ConvertHeaderLibraryChunkFlagsToString(const HeaderLibraryChunkFlags headerLibraryChunkFlags)
 {
     std::string flags;
-
     if ((headerLibraryChunkFlags & HeaderLibraryChunkFlags::GLOBAL) == HeaderLibraryChunkFlags::GLOBAL)
     {
         flags += "Global, ";
     }
-
     if ((headerLibraryChunkFlags & HeaderLibraryChunkFlags::NON_STREAMED) == HeaderLibraryChunkFlags::NON_STREAMED)
     {
         flags += "Non-streamed, ";
     }
-
     if ((headerLibraryChunkFlags & HeaderLibraryChunkFlags::MEDIA_STREAMED) == HeaderLibraryChunkFlags::MEDIA_STREAMED)
     {
         flags += "Media-streamed, ";
     }
-
     if ((headerLibraryChunkFlags & HeaderLibraryChunkFlags::INIT_LIBRARY) == HeaderLibraryChunkFlags::INIT_LIBRARY)
     {
         flags += "Init library, ";
     }
-
     if ((headerLibraryChunkFlags & HeaderLibraryChunkFlags::DYNAMIC) == HeaderLibraryChunkFlags::DYNAMIC)
     {
         flags += "Dynamic";
     }
-
     if (flags.length() == 0)
     {
         flags = "None";
@@ -183,24 +158,19 @@ std::string ResourceUtility::ConvertHeaderLibraryChunkFlagsToString(const Header
     {
         flags = flags.erase(flags.length() - 2, 2);
     }
-
     return flags;
 }
-
 std::string ResourceUtility::GetResourceName(const std::string& resourceID)
 {
     std::string name;
-
     if (resourceID.contains("("))
     {
         size_t index = resourceID.substr(0, resourceID.find("(")).find_last_of('/');
-
         name = resourceID.substr(index + 1, resourceID.find("(") - 2 - index);
     }
     else
     {
         size_t index = resourceID.find("?");
-
         if (index != -1 && resourceID[index + 1] != '/')
         {
             name = resourceID.substr(resourceID.find("?") + 1, resourceID.find("]") - resourceID.find("?") - 1);
@@ -210,38 +180,27 @@ std::string ResourceUtility::GetResourceName(const std::string& resourceID)
             name = resourceID.substr(resourceID.find_last_of("/") + 1, resourceID.find("]") - resourceID.find_last_of("/") - 1);
         }
     }
-
     name = name.substr(0, name.find("."));
-
     return name;
 }
-
 std::string ResourceUtility::ConvertResourceTypeToString(const unsigned int type)
 {
     std::stringstream stream;
-
     stream << std::hex << type;
-
     std::string hex(stream.str());
-
     size_t length = hex.length();
     std::string result;
-
     for (size_t i = 0; i < length; i += 2)
     {
         std::string byte = hex.substr(i, 2);
         char chr = static_cast<char>(static_cast<int>(strtol(byte.c_str(), nullptr, 16)));
-
         result.push_back(chr);
     }
-
     return result;
 }
-
 std::shared_ptr<Resource> ResourceUtility::CreateResource(const std::string& type)
 {
     std::shared_ptr<Resource> resource;
-
     if (type == "AIBB")
     {
         resource = std::make_shared<BehaviorTreeEntityBlueprint>();
@@ -450,14 +409,11 @@ std::shared_ptr<Resource> ResourceUtility::CreateResource(const std::string& typ
     {
         resource = std::make_shared<Resource>();
     }
-
     return resource;
 }
-
 void ResourceUtility::LoadResource(std::shared_ptr<Resource> resource)
 {
     const ResourceInfoRegistry::ResourceInfo& resourceInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(resource->GetHash());
-
     if (resourceInfo.headerLibraries.size() > 0)
     {
         resource->LoadResource(0, resourceInfo.headerLibraries[0].chunkIndex, resourceInfo.headerLibraries[0].indexInLibrary, true, true, true);
@@ -467,7 +423,6 @@ void ResourceUtility::LoadResource(std::shared_ptr<Resource> resource)
         resource->LoadResource(0, -1, -1, false, false, true);
     }
 }
-
 std::string ResourceUtility::GenerateFileName(std::shared_ptr<Resource> resource)
 {
     return std::format("{}_{}", resource->GetName(), StringUtility::ConvertValueToHexString(resource->GetRuntimeResourceID()));

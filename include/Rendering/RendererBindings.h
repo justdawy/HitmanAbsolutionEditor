@@ -1,12 +1,10 @@
 #pragma once
-
 enum class ConstantBufferRendererBindings
 {
     Camera,
     Mesh,
     Light
 };
-
 enum class ShaderResourceViewRendererBindings
 {
     DiffuseTexture,
@@ -16,12 +14,10 @@ enum class ShaderResourceViewRendererBindings
     Alpha,
     Texture
 };
-
 enum class UnorderedAccessViewRendererBindings
 {
     Texture
 };
-
 enum class SamplerRendererBindings
 {
     Surface,

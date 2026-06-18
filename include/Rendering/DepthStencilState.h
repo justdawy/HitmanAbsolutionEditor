@@ -1,22 +1,14 @@
 #pragma once
-
 #include <d3d11.h>
-
 class DepthStencilState
 {
 public:
     enum class RHIZBuffer
     {
-        // Before changing this, make sure all math & shader assumptions are correct! Also wrap your C++ assumptions with
-        //		static_assert(ERHIZBuffer::IsInvertedZBuffer(), ...);
-        // Shader-wise, make sure to update Definitions.usf, HAS_INVERTED_Z_BUFFER
         FarPlane = 1,
         NearPlane = 0,
-
-        // 'bool' for knowing if the API is using Inverted Z buffer
         IsInverted = RHIZBuffer::FarPlane < RHIZBuffer::NearPlane,
     };
-
     enum class CompareFunction
     {
         Less,
@@ -27,14 +19,11 @@ public:
         NotEqual,
         Never,
         Always,
-
-        // Utility enumerations
         DepthNearOrEqual = (((int)RHIZBuffer::IsInverted != 0) ? GreaterEqual : LessEqual),
         DepthNear = (((int)RHIZBuffer::IsInverted != 0) ? Greater : Less),
         DepthFartherOrEqual = (((int)RHIZBuffer::IsInverted != 0) ? LessEqual : GreaterEqual),
         DepthFarther = (((int)RHIZBuffer::IsInverted != 0) ? Less : Greater),
     };
-
     enum class StencilOp
     {
         Keep,
@@ -46,7 +35,6 @@ public:
         Increment,
         Decrement
     };
-
     DepthStencilState(
         const bool enableDepthWrite = true,
         const DepthStencilState::CompareFunction depthTest = DepthStencilState::CompareFunction::DepthNearOrEqual,
@@ -67,10 +55,8 @@ public:
     ID3D11DepthStencilState* GetDepthStencilState() const;
     static D3D11_COMPARISON_FUNC ConvertCompareFunction(const CompareFunction compareFunction);
     static D3D11_STENCIL_OP ConvertStencilOp(const StencilOp stencilOp);
-
 private:
     void CreateResource();
-
     bool enableDepthWrite;
     D3D11_COMPARISON_FUNC depthTest;
     bool enableFrontFaceStencil;

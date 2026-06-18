@@ -1,12 +1,8 @@
 #pragma once
-
 #include "float4.h"
 #include "SVector3.h"
-
 struct SMatrix33;
-
 class Quaternion;
-
 struct SQuaternion
 {
 	SQuaternion();
@@ -38,6 +34,5 @@ struct SQuaternion
 	static SQuaternion Unit();
 	static SQuaternion RotationDifference(const SVector3& vector, const SVector3& vector2);
 	void SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer);
-
 	float4 w128;
 };

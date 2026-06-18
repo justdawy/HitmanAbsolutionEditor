@@ -1,8 +1,6 @@
 #pragma once
-
 #include "SVector4.h"
 #include "SQuaternion.h"
-
 struct SMatrix44
 {
 	SMatrix44();
@@ -30,7 +28,6 @@ struct SMatrix44
 	static SMatrix44 CreateRotation(const SQuaternion& rotation);
 	void Translate(const SVector3& translation);
 	void Rescale(const SVector3& scale);
-
 	union
 	{
 		struct
@@ -52,10 +49,8 @@ struct SMatrix44
 			float m43;
 			float m44;
 		};
-
 		SVector4 r[4];
 		float v[16];
 	};
-
 	static const SMatrix44 Identity;
 };

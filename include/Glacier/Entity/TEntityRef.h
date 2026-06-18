@@ -1,7 +1,5 @@
 #pragma once
-
 #include "ZEntityRef.h"
-
 template <typename T>
 class TEntityRef
 {

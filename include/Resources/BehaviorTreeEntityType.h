@@ -1,7 +1,5 @@
 #pragma once
-
 #include "Resource.h"
-
 class BehaviorTreeEntityType : public Resource
 {
 public:

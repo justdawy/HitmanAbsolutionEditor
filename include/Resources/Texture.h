@@ -1,16 +1,11 @@
 #pragma once
-
 #include <string>
-
 #include "DirectXTex.h"
-
 #include "Glacier/Render/ZTextureMap.h"
 #include "Glacier/Render/ERenderFormat.h"
 #include "Glacier/Render/SRenderFormatDesc.h"
 #include "Glacier/Render/ERenderResourceMipInterpolation.h"
-
 #include "Resources/Resource.h"
-
 class Texture : public Resource
 {
 public:
@@ -46,7 +41,6 @@ public:
     static std::string ConvertRenderResourceMipInterpolationToString(const ERenderResourceMipInterpolation renderResourceMipInterpolation);
     static std::string GetErrorMessage(HRESULT hresult);
     static void LoadTextureFromMemory(void* data, unsigned int width, unsigned int height, ID3D11Device* d3dDevice, ID3D11ShaderResourceView** shaderResourceView);
-
 private:
     ZTextureMap::STextureMapHeader textureMapHeader;
     unsigned char* data;

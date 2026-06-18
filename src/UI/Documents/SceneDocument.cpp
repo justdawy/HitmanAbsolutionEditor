@@ -1,6 +1,5 @@
 #include <filesystem>
 #include <IconsMaterialDesignIcons.h>
-
 #include <UI/Documents/SceneDocument.h>
 #include <UI/Documents/LibraryInfoDocument.h>
 #include <UI/Documents/HeaderLibrariesSearchDocument.h>
@@ -12,7 +11,6 @@
 #include <UI/Panels/SettingsPanel.h>
 #include <Editor.h>
 #include <Logger.h>
-
 SceneDocument::SceneDocument(const char* name, const char* icon, const Type type) : Document(name, icon, type)
 {
     std::shared_ptr<SceneHierarchyPanel> sceneHierarchyPanel = std::make_shared<SceneHierarchyPanel>("Scene Hierarchy", ICON_MDI_VIEW_LIST, nullptr);
@@ -20,21 +18,18 @@ SceneDocument::SceneDocument(const char* name, const char* icon, const Type type
     std::shared_ptr<ConsolePanel> consolePanel = std::make_shared<ConsolePanel>("Console", ICON_MDI_CONSOLE);
     std::shared_ptr<ResourceBrowserPanel> resourceBrowserPanel = std::make_shared<ResourceBrowserPanel>("Resource Browser", ICON_MDI_FOLDER_OPEN);
     std::shared_ptr<SettingsPanel> settingsPanel = std::make_shared<SettingsPanel>("Settings", ICON_MDI_COG);
-
     AddPanel(sceneHierarchyPanel);
     AddPanel(sceneViewportPanel);
     AddPanel(consolePanel);
     AddPanel(resourceBrowserPanel);
     AddPanel(settingsPanel);
 }
-
 void SceneDocument::CreateLayout(const ImGuiID dockspaceID, const ImVec2 dockspaceSize)
 {
     ImGuiID mainDockID = dockspaceID;
     ImGuiID leftDockID = ImGui::DockBuilderSplitNode(mainDockID, ImGuiDir_Left, 0.2f, nullptr, &mainDockID);
     ImGuiID rightDockID = ImGui::DockBuilderSplitNode(mainDockID, ImGuiDir_Right, 0.2f, nullptr, &mainDockID);
     ImGuiID downDockID = ImGui::DockBuilderSplitNode(mainDockID, ImGuiDir_Down, 0.25f, nullptr, &mainDockID);
-
     ImGui::DockBuilderDockWindow(CalculatePanelID(0, currentDockspaceID).c_str(), leftDockID);
     ImGui::DockBuilderDockWindow(CalculatePanelID(1, currentDockspaceID).c_str(), mainDockID);
     ImGui::DockBuilderDockWindow(CalculatePanelID(2, currentDockspaceID).c_str(), downDockID);
@@ -42,7 +37,6 @@ void SceneDocument::CreateLayout(const ImGuiID dockspaceID, const ImVec2 dockspa
     ImGui::DockBuilderDockWindow(CalculatePanelID(4, currentDockspaceID).c_str(), mainDockID);
     ImGui::DockBuilderFinish(dockspaceID);
 }
-
 void SceneDocument::RenderMenuBar()
 {
     static std::string settingsLabel = std::format("{} Settings", ICON_MDI_COG);
@@ -50,7 +44,6 @@ void SceneDocument::RenderMenuBar()
     static std::string searchHashMapLabel = std::format("{} Search Hash Map", ICON_MDI_MAGNIFY);
     static std::string deepSearchLabel = std::format("{} Deep Search", ICON_MDI_MAGNIFY);
     const ImGuiID defaultDockID = Editor::GetInstance().GetLastActiveDocument() ? Editor::GetInstance().GetLastActiveDocument()->GetCurrentDockID() : 0;
-
     if (ImGui::BeginMenuBar())
     {
         if (ImGui::BeginMenu("View"))
@@ -59,68 +52,41 @@ void SceneDocument::RenderMenuBar()
             {
                 ImGui::MenuItem(panels[i]->GetName(), nullptr, panels[i]->GetOpen());
             }
-
             ImGui::EndMenu();
         }
-
         if (ImGui::BeginMenu("Engine"))
         {
             if (ImGui::MenuItem("Connect with engine"))
             {
-                /*PipeClient& pipeClient = PipeClient::GetInstance();
-                SharedMemoryClient& sharedMemoryClient = SharedMemoryClient::GetInstance();
-
-                if (pipeClient.IsConnectedWithEngine())
-                {
-                    Logger::GetInstance().Log(Logger::Level::Info, "Editor is already connected with engine.");
-                }
-                else
-                {
-                    pipeClient.Connect();
-                    pipeClient.SetMessageCallback(MemberDelegate<SceneViewportPanel, void(const std::string & type, const std::string & content)>(sceneViewportPanel.get(), &SceneViewportPanel::OnReceiveMessage));
-
-                    sharedMemoryClient.Connect();
-                }*/
             }
-
             ImGui::EndMenu();
         }
-
         if (ImGui::BeginMenu("Library"))
         {
             if (ImGui::MenuItem("View Library Info"))
             {
                 std::shared_ptr<LibraryInfoDocument> libraryInfoDocument = std::make_shared<LibraryInfoDocument>("Library Info", ICON_MDI_FILE_DOCUMENT, Document::Type::LibraryInfo, defaultDockID);
-
                 Editor::GetInstance().GetDocuments().push_back(libraryInfoDocument);
             }
-
             ImGui::EndMenu();
         }
-
         if (ImGui::BeginMenu("Search"))
         {
             if (ImGui::MenuItem(searchHeaderLibrariesLabel.c_str()))
             {
                 std::shared_ptr<HeaderLibrariesSearchDocument> headerLibrariesSearchDocument = std::make_shared<HeaderLibrariesSearchDocument>("Search Header Libraries", ICON_MDI_FILE_DOCUMENT, Document::Type::SearchHeaderLibraries, defaultDockID);
-
                 Editor::GetInstance().GetDocuments().push_back(headerLibrariesSearchDocument);
             }
-
             if (ImGui::MenuItem(searchHashMapLabel.c_str()))
             {
                 std::shared_ptr<HashMapSearchDocument> hashMapSearchDocument = std::make_shared<HashMapSearchDocument>("Search Hash Map", ICON_MDI_FILE_DOCUMENT, Document::Type::SearchHashMap, defaultDockID);
-
                 Editor::GetInstance().GetDocuments().push_back(hashMapSearchDocument);
             }
-
             if (ImGui::MenuItem(deepSearchLabel.c_str()))
             {
             }
-
             ImGui::EndMenu();
         }
-
         if (ImGui::BeginMenu("Tools"))
         {
             if (ImGui::MenuItem(settingsLabel.c_str()))
@@ -133,28 +99,23 @@ void SceneDocument::RenderMenuBar()
                     }
                 }
             }
-
             if (ImGui::MenuItem(ICON_MDI_RESTORE " Restore Backups"))
             {
                 Settings& settings = Settings::GetInstance();
                 std::string runtimeFolder = settings.GetRuntimeFolderPath();
-
                 if (!runtimeFolder.empty())
                 {
                     int restoredCount = 0;
-
                     for (const auto& entry : std::filesystem::recursive_directory_iterator(runtimeFolder))
                     {
                         if (entry.is_regular_file() && entry.path().extension() == ".bak")
                         {
                             std::string originalPath = entry.path().string();
                             originalPath.erase(originalPath.length() - 4);
-
                             std::filesystem::copy_file(entry.path(), originalPath, std::filesystem::copy_options::overwrite_existing);
                             restoredCount++;
                         }
                     }
-
                     if (restoredCount > 0)
                     {
                         Logger::GetInstance().Log(Logger::Level::Info, std::format("Restored {} backup files", restoredCount));
@@ -165,10 +126,8 @@ void SceneDocument::RenderMenuBar()
                     }
                 }
             }
-
             ImGui::EndMenu();
         }
-
         ImGui::EndMenuBar();
     }
 }

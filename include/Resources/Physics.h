@@ -1,20 +1,14 @@
 #pragma once
-
 #undef min
 #undef max
-
 #include <string>
-
 #include "Foundation/NxMat33.h"
 #include "Physics/NxSphereShapeDesc.h"
 #include "Physics/NxCapsuleShapeDesc.h"
 #include "Physics/NxBoxShapeDesc.h"
-
 #include "Glacier/Physics/ZPhysicsResourceData.h"
 #include "Glacier/Physics/ECollidableLayer.h"
-
 #include "Resources/Resource.h"
-
 class Physics : public Resource
 {
 public:
@@ -37,7 +31,6 @@ public:
 	bool IsCollisionLayerOpaque(const ECollidableLayer collidableLayer);
 	void Export(const std::string& outputPath, const std::string& exportOption) override;
 	void SerializeToJson(const std::string& outputFilePath);
-
 private:
 	const float skinWidth = 0.00999999978f;
 	NxPhysicsSDK* physicsSDK;

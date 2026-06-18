@@ -1,10 +1,7 @@
 #pragma once
-
 #include <string>
-
 #include "InputFileStream.h"
 #include "InputMemoryStream.h"
-
 class BinaryReader
 {
 public:
@@ -16,7 +13,6 @@ public:
 	void* GetBuffer(bool seekToCurrentPosition = false);
 	const size_t GetPosition();
 	const size_t GetSize() const;
-
 	template <typename T>
 	T Read()
 	{
@@ -24,13 +20,10 @@ public:
 		{
 			return inputFileStream->Read<T>();
 		}
-
 		return inputMemoryStream->Read<T>();
 	}
-
 	std::string ReadString(const char delimiter = '\0');
 	std::string ReadString(const size_t size, const bool isNullTerminated = true);
-
 	template <typename T>
 	T* Read(const size_t size)
 	{
@@ -38,10 +31,8 @@ public:
 		{
 			return inputFileStream->Read<T>(size);
 		}
-
 		return inputMemoryStream->Read<T>(size);
 	}
-
 	template <typename T>
 	T* Read(const size_t size) const
 	{
@@ -49,10 +40,8 @@ public:
 		{
 			return inputFileStream->Read<T>(size);
 		}
-
 		return inputMemoryStream->Read<T>(size);
 	}
-
 	template <typename T>
 	void Read(T* buffer, const size_t size)
 	{
@@ -65,7 +54,6 @@ public:
 			inputMemoryStream->Read<T>(buffer, size);
 		}
 	}
-
 	template <>
 	void Read(void* buffer, const size_t size)
 	{
@@ -78,10 +66,8 @@ public:
 			inputMemoryStream->Read<void>(buffer, size);
 		}
 	}
-
 	void Skip(const size_t count);
 	void Seek(const size_t offset, const SeekOrigin seekOrigin = SeekOrigin::Begin);
-
 private:
 	InputFileStream* inputFileStream;
 	InputMemoryStream* inputMemoryStream;

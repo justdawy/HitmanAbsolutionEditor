@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ECollidableLayer
 {
 	eCollLayer_COLLIDE_WITH_ALL = 0,

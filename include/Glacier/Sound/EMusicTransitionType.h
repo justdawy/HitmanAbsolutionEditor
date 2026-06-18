@@ -1,5 +1,4 @@
 #pragma once
-
 enum EMusicTransitionType
 {
 	EMusicTransitionType_Now = 0,

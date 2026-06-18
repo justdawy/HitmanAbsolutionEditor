@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ESoundPlayParameters
 {
 	SOUND_PLAY_SINGLE = 0,

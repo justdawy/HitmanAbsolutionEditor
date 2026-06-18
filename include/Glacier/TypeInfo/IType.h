@@ -1,13 +1,9 @@
 #pragma once
-
 #include <string.h>
-
 #include "../ZString.h"
 #include "ETypeInfoFlags.h"
-
 struct STypeID;
 struct STypeFunctions;
-
 class IType
 {
 public:
@@ -19,7 +15,6 @@ public:
 	const char* GetTypeName() const;
 	const bool IsEnumType() const;
 	const bool IsPrimitiveType() const;
-
 private:
 	const STypeFunctions* m_pTypeFunctions;
 	unsigned short m_nTypeSize;

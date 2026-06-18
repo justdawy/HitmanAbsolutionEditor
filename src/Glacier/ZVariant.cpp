@@ -1,5 +1,4 @@
 #include <format>
-
 #include "Glacier/ZVariant.h"
 #include "Glacier/Serializer/ZBinarySerializer.h"
 #include "Glacier/Math/SVector2.h"
@@ -19,17 +18,13 @@
 #include "Glacier/SSettingsParamMultiplier.h"
 #include "Glacier/Entity/ZEntityReference.h"
 #include "Registry/EnumRegistry.h"
-
 ZVariant::ZVariant() : ZObjectRef()
 {
-
 }
-
 ZVariant::ZVariant(const ZVariant& other)
 {
 	Set(other.m_TypeID, other.m_pData);
 }
-
 ZVariant::~ZVariant()
 {
 	if (m_TypeID->pTypeInfo->IsPrimitiveType() || m_TypeID->pTypeInfo->IsEnumType())
@@ -108,14 +103,11 @@ ZVariant::~ZVariant()
 				break;
 		}
 	}
-
 	m_pData = nullptr;
 }
-
 void ZVariant::Allocate(STypeID* type)
 {
 	m_TypeID = type;
-
 	if (m_TypeID->pTypeInfo->IsPrimitiveType() || m_TypeID->pTypeInfo->IsEnumType())
 	{
 		m_pData = operator new(m_TypeID->pTypeInfo->GetTypeSize());
@@ -192,18 +184,14 @@ void ZVariant::Allocate(STypeID* type)
 				break;
 		}
 	}
-
 	memset(m_pData, 0, m_TypeID->pTypeInfo->GetTypeSize());
 }
-
 void ZVariant::Set(STypeID* type, const void* pData)
 {
 	Allocate(type);
-
 	if (m_TypeID->pTypeInfo->IsPrimitiveType() || m_TypeID->pTypeInfo->IsEnumType())
 	{
 		m_pData = operator new(m_TypeID->pTypeInfo->GetTypeSize());
-
 		memcpy(m_pData, pData, m_TypeID->pTypeInfo->GetTypeSize());
 	}
 	else
@@ -279,45 +267,33 @@ void ZVariant::Set(STypeID* type, const void* pData)
 		}
 	}
 }
-
 void ZVariant::SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer)
 {
 	writer.StartObject();
-
 	writer.String("typeName");
 	m_TypeID->SerializeToJson(writer);
-
 	writer.String("value");
-
 	std::string typeName = m_TypeID->pTypeInfo->GetTypeName();
-
 	if (!SerializeData(writer))
 	{
 		throw std::invalid_argument(std::format("Type {} isn't supported", typeName));
 	}
-
 	writer.EndObject();
 }
-
 void ZVariant::SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset)
 {
 	unsigned int typeIDOffset = offset + offsetof(ZVariant, m_TypeID);
 	unsigned int dataOffset = offset + offsetof(ZVariant, m_pData);
 	unsigned int nullPointer = -1;
-
 	binarySerializer.RecordOffsetForTypeIDReindexing(typeIDOffset);
-
 	if (m_TypeID)
 	{
 		unsigned int typeIndex = binarySerializer.TypeIdToIndex(m_TypeID);
-
 		binarySerializer.WriteToMemory(&typeIndex, sizeof(unsigned int), typeIDOffset);
-
 		if (m_pData)
 		{
 			std::optional<unsigned int> result = binarySerializer.GetDataOffset(this);
 			unsigned int dataOffset2;
-
 			if (result.has_value())
 			{
 				dataOffset2 = result.value();
@@ -326,11 +302,8 @@ void ZVariant::SerializeToMemory(ZBinarySerializer& binarySerializer, const unsi
 			{
 				unsigned int typeSize = m_TypeID->pTypeInfo->GetTypeSize();
 				unsigned int typeAlignment = m_TypeID->pTypeInfo->GetTypeAlignment();
-
 				dataOffset2 = binarySerializer.GetAlignedOffset(typeSize, typeAlignment);
-
 				std::string typeName = m_TypeID->pTypeInfo->GetTypeName();
-
 				if (m_TypeID->pTypeInfo->IsPrimitiveType() || m_TypeID->pTypeInfo->IsEnumType())
 				{
 					binarySerializer.WriteToMemory(m_pData, typeSize, dataOffset2);
@@ -423,10 +396,8 @@ void ZVariant::SerializeToMemory(ZBinarySerializer& binarySerializer, const unsi
 				{
 					static_cast<TArray<ECameraState>*>(m_pData)->SerializeToMemory(binarySerializer, dataOffset2);
 				}
-
 				binarySerializer.SetDataOffset(this, dataOffset2);
 			}
-
 			binarySerializer.WriteToMemory(&dataOffset2, sizeof(unsigned int), dataOffset);
 		}
 		else
@@ -439,14 +410,11 @@ void ZVariant::SerializeToMemory(ZBinarySerializer& binarySerializer, const unsi
 		binarySerializer.WriteToMemory(&nullPointer, sizeof(unsigned int), typeIDOffset);
 		binarySerializer.WriteToMemory(&nullPointer, sizeof(unsigned int), dataOffset);
 	}
-
 	binarySerializer.RecordOffsetForRebasing(dataOffset);
 }
-
 bool ZVariant::SerializeData(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer)
 {
 	std::string typeName = m_TypeID->pTypeInfo->GetTypeName();
-
 	if (typeName == "bool")
 	{
 		writer.Bool(*static_cast<bool*>(m_pData));
@@ -590,20 +558,16 @@ bool ZVariant::SerializeData(rapidjson::PrettyWriter<rapidjson::StringBuffer>& w
 	else if (m_TypeID->pTypeInfo->IsEnumType())
 	{
 		const std::map<int, std::string>& items = EnumRegistry::GetInstance().GetEnum(typeName);
-
 		if (items.size() == 0)
 		{
 			return false;
 		}
-
 		int value = *static_cast<int*>(m_pData);
-
 		for (auto it = items.begin(); it != items.end(); it++)
 		{
 			if (it->first == value)
 			{
 				writer.String(it->second.c_str());
-
 				break;
 			}
 		}
@@ -612,104 +576,78 @@ bool ZVariant::SerializeData(rapidjson::PrettyWriter<rapidjson::StringBuffer>& w
 	{
 		return false;
 	}
-
 	return true;
 }
-
 ZVariant* ZVariant::DeserializeFromJson(const rapidjson::Value& object)
 {
 	ZVariant* variant = new ZVariant();
 	std::string typeName = object["typeName"].GetString();
 	static std::unordered_map<STypeID*, std::vector<void*>> values;
-
 	variant->m_TypeID = STypeID::DeserializeFromJson(object["typeName"].GetString());
-
 	if (typeName == "bool")
 	{
 		bool value2 = object["value"].GetBool();
-
 		variant->m_pData = operator new(sizeof(bool));
-
 		memcpy(variant->m_pData, &value2, sizeof(bool));
 	}
 	else if (typeName == "int8" || typeName == "char")
 	{
 		char value = object["value"].GetInt();
-
 		variant->m_pData = operator new(sizeof(char));
-
 		memcpy(variant->m_pData, &value, sizeof(char));
 	}
 	else if (typeName == "uint8")
 	{
 		unsigned char value = object["value"].GetUint();
-
 		variant->m_pData = operator new(sizeof(unsigned char));
-
 		memcpy(variant->m_pData, &value, sizeof(unsigned char));
 	}
 	else if (typeName == "int16")
 	{
 		short value = object["value"].GetInt();
-
 		variant->m_pData = operator new(sizeof(short));
-
 		memcpy(variant->m_pData, &value, sizeof(short));
 	}
 	else if (typeName == "uint16")
 	{
 		unsigned short value = object["value"].GetUint();
-
 		variant->m_pData = operator new(sizeof(unsigned short));
-
 		memcpy(variant->m_pData, &value, sizeof(unsigned short));
 	}
 	else if (typeName == "int32")
 	{
 		int value = object["value"].GetInt();
-
 		variant->m_pData = operator new(sizeof(int));
-
 		memcpy(variant->m_pData, &value, sizeof(int));
 	}
 	else if (typeName == "uint32")
 	{
 		unsigned int value = object["value"].GetUint();
-
 		variant->m_pData = operator new(sizeof(unsigned int));
-
 		memcpy(variant->m_pData, &value, sizeof(unsigned int));
 	}
 	else if (typeName == "int64")
 	{
 		long long value = object["value"].GetInt64();
-
 		variant->m_pData = operator new(sizeof(long long));
-
 		memcpy(variant->m_pData, &value, sizeof(long long));
 	}
 	else if (typeName == "uint64")
 	{
 		unsigned long long value2 = object["value"].GetUint64();
-
 		variant->m_pData = operator new(sizeof(unsigned long long));
-
 		memcpy(variant->m_pData, &value2, sizeof(unsigned long long));
 	}
 	else if (typeName == "float32")
 	{
 		float value2 = object["value"].GetFloat();
-
 		variant->m_pData = operator new(sizeof(float));
-
 		memcpy(variant->m_pData, &value2, sizeof(float));
 	}
 	else if (typeName == "float64")
 	{
 		double value2 = object["value"].GetDouble();
-
 		variant->m_pData = operator new(sizeof(double));
-
 		memcpy(variant->m_pData, &value2, sizeof(double));
 	}
 	else if (typeName == "SVector2")
@@ -804,30 +742,23 @@ ZVariant* ZVariant::DeserializeFromJson(const rapidjson::Value& object)
 	{
 		std::string value = object["value"].GetString();
 		const std::map<int, std::string>& items = EnumRegistry::GetInstance().GetEnum(typeName);
-
 		variant->m_pData = operator new(sizeof(unsigned int));
-
 		for (auto it = items.begin(); it != items.end(); it++)
 		{
 			if (it->second == value)
 			{
 				memcpy(variant->m_pData, &it->first, sizeof(unsigned int));
-
 				break;
 			}
 		}
 	}
-
-	//Check whether SSettingsParamMultiplier, TArray<ZSharedSensorDef::SVisibilitySetting>, TArray<ECameraState>, ZEntityReference and ZEntityID should be compared because of enum
 	void* value = GetValue(variant, values);
-
 	if (value)
 	{
 		variant->m_pData = value;
 	}
 	else
 	{
-		//SEntityTemplateReference objects, TArray and enums aren't duplicated
 		if (typeName != "SEntityTemplateReference" &&
 			!typeName.starts_with("TArray") &&
 			!variant->m_TypeID->pTypeInfo->IsEnumType())
@@ -835,21 +766,17 @@ ZVariant* ZVariant::DeserializeFromJson(const rapidjson::Value& object)
 			values[variant->m_TypeID].push_back(variant->m_pData);
 		}
 	}
-
 	return variant;
 }
-
 void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<STypeID*, std::vector<void*>>& values)
 {
 	auto it = values.find(variant->m_TypeID);
 	void* result = nullptr;
-
 	if (it != values.end())
 	{
 		std::string typeName = variant->m_TypeID->pTypeInfo->GetTypeName();
 		bool found = false;
 		int index = 0;
-
 		for (unsigned int i = 0; i < it->second.size(); ++i)
 		{
 			if ((typeName == "bool") &&
@@ -857,7 +784,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "int8" || typeName == "char") &&
@@ -865,7 +791,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "uint8") &&
@@ -873,7 +798,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "int16") &&
@@ -881,7 +805,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "uint16") &&
@@ -889,7 +812,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "int32") &&
@@ -897,7 +819,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "uint32") &&
@@ -905,7 +826,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "int64") &&
@@ -913,7 +833,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "uint64") &&
@@ -921,7 +840,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "float32") &&
@@ -929,7 +847,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "float64") &&
@@ -937,7 +854,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "SVector2") &&
@@ -945,7 +861,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "SVector3") &&
@@ -953,7 +868,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "SMatrix43") &&
@@ -961,7 +875,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "SColorRGB") &&
@@ -969,7 +882,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "SColorRGBA") &&
@@ -977,23 +889,13 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
-			/*else if ((typeName == "SEntityTemplateReference") &&
-				*static_cast<SEntityTemplateReference*>(variant->m_pData) == *static_cast<SEntityTemplateReference*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
 			else if ((typeName == "SBodyPartDamageMultipliers") &&
 				*static_cast<SBodyPartDamageMultipliers*>(variant->m_pData) == *static_cast<SBodyPartDamageMultipliers*>(it->second[i]))
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "ZRuntimeResourceID") &&
@@ -1001,7 +903,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "ZString") &&
@@ -1009,7 +910,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "ZCurve") &&
@@ -1017,7 +917,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "ZGameTime") &&
@@ -1025,7 +924,6 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
 			else if ((typeName == "ZSpeakerLevels") &&
@@ -1033,80 +931,13 @@ void* ZVariant::GetValue(const ZVariant* variant, const std::unordered_map<SType
 			{
 				found = true;
 				index = i;
-
 				break;
 			}
-			/*else if ((typeName == "TArray<SEntityTemplateReference>") &&
-				*static_cast<TArray<SEntityTemplateReference>*>(variant->m_pData) == *static_cast<TArray<SEntityTemplateReference>*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
-			/*else if ((typeName == "TArray<float32>") &&
-				*static_cast<TArray<float>*>(variant->m_pData) == *static_cast<TArray<float>*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
-			/*else if ((typeName == "TArray<ZGameTime>") &&
-				*static_cast<TArray<ZGameTime>*>(variant->m_pData) == *static_cast<TArray<ZGameTime>*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
-			/*else if ((typeName == "TArray<SVector2>") &&
-				*static_cast<TArray<SVector2>*>(variant->m_pData) == *static_cast<TArray<SVector2>*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
-			/*else if ((typeName == "TArray<bool>") &&
-				*static_cast<TArray<bool>*>(variant->m_pData) == *static_cast<TArray<bool>*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
-			/*else if ((typeName == "TArray<ZSharedSensorDef.SVisibilitySetting>") &&
-				*static_cast<TArray<ZSharedSensorDef::SVisibilitySetting>*>(variant->m_pData) == *static_cast<TArray<ZSharedSensorDef::SVisibilitySetting>*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
-			/*else if ((typeName == "TArray<ZString>") &&
-				*static_cast<TArray<ZString>*>(variant->m_pData) == *static_cast<TArray<ZString>*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
-			/*else if ((typeName == "TArray<ECameraState>") &&
-				*static_cast<TArray<ECameraState>*>(variant->m_pData) == *static_cast<TArray<ECameraState>*>(it->second[i]))
-			{
-				found = true;
-				index = i;
-
-				break;
-			}*/
 		}
-
 		if (found)
 		{
 			result = it->second[index];
 		}
 	}
-
 	return result;
 }

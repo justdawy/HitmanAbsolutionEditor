@@ -1,7 +1,5 @@
 #pragma once
-
 #include "Resource.h"
-
 class NavMesh : public Resource
 {
 public:

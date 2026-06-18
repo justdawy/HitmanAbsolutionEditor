@@ -1,7 +1,5 @@
 #pragma once
-
 #include "SPrimObject.h"
-
 struct SPrimSubMesh : SPrimObject
 {
 	unsigned int lNumVertices;

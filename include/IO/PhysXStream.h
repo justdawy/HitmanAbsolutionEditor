@@ -1,11 +1,8 @@
 #pragma once
-
 #include "Foundation/NxSimpleTypes.h"
 #include "Foundation/NxStream.h"
-
 #include "IO/BinaryReader.h"
 #include "IO/BinaryWriter.h"
-
 class PhysXStream : public NxStream
 {
 public:
@@ -22,7 +19,6 @@ public:
 	NxStream& storeFloat(NxF32 f) override;
 	NxStream& storeDouble(NxF64 f) override;
 	NxStream& storeBuffer(const void* buffer, NxU32 size) override;
-
 private:
 	BinaryReader* binaryReader;
 	BinaryWriter binaryWriter;

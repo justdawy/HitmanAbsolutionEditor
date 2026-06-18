@@ -1,7 +1,5 @@
 #pragma once
-
 #include "Resource.h"
-
 class CompiledBehaviorTree : public Resource
 {
 public:

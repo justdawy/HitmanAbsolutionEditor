@@ -1,5 +1,4 @@
 #pragma once
-
 enum class EResourceReferenceFlags : unsigned int
 {
 	RESOURCE_REFERENCE_NO_FLAGS = 0x0,
@@ -12,7 +11,6 @@ enum class EResourceReferenceFlags : unsigned int
 	RESOURCE_REFERENCE_INSTALL_DEPENDENCY = 0x80000000,
 	RESOURCE_REFERENCE_CYCLIC = 0x4000000
 };
-
 inline EResourceReferenceFlags operator&(EResourceReferenceFlags lhs, EResourceReferenceFlags rhs)
 {
 	return static_cast<EResourceReferenceFlags>(static_cast<unsigned int>(lhs) & static_cast<unsigned int>(rhs));

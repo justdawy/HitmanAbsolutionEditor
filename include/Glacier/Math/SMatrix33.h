@@ -1,14 +1,10 @@
 #pragma once
-
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
-
 #include "SVector3.h"
 #include "SQuaternion.h"
-
 struct SMatrix44;
-
 struct SMatrix33
 {
 	SMatrix33();
@@ -45,7 +41,6 @@ struct SMatrix33
 	static SMatrix33 ScaleToMatrix(const SVector3& scale);
 	static SMatrix33 NormalizedAxisAngleToMatrixEx(const SVector3& axis, const float angleSin, const float angleCos);
 	static SMatrix33 NormalizedAxisAngleToMatrix(const SVector3& axis, const float angle);
-
 	union
 	{
 		struct
@@ -54,7 +49,6 @@ struct SMatrix33
 			SVector3 YAxis;
 			SVector3 ZAxis;
 		};
-
 		struct
 		{
 			float m11;
@@ -67,7 +61,6 @@ struct SMatrix33
 			float m32;
 			float m33;
 		};
-
 		float v[9];
 		SVector3 r[3];
 	};

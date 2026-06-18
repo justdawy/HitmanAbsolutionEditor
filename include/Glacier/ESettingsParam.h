@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ESettingsParam
 {
     ESP_ProjectileDamage = 0,

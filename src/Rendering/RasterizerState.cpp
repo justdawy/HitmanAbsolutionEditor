@@ -2,7 +2,6 @@
 #include "Utility/D3D11Utility.h"
 #include "Rendering/DirectXRenderer.h"
 #include "Editor.h"
-
 RasterizerState::RasterizerState
 (
     const FillMode fillMode,
@@ -23,20 +22,16 @@ RasterizerState::RasterizerState
     this->depthBias = depthBias;
     this->depthBiasClamp = depthBiasClamp;
     this->depthBiasSlopeScaled = depthBiasSlopeScaled;
-
     CreateResource();
 }
-
 RasterizerState::~RasterizerState()
 {
     D3D11Utility::Release(rasterizerState);
 }
-
 ID3D11RasterizerState* RasterizerState::GetRasterizerState() const
 {
     return rasterizerState;
 }
-
 D3D11_FILL_MODE RasterizerState::ConvertFillMode(const FillMode fillMode)
 {
     switch (fillMode)
@@ -47,7 +42,6 @@ D3D11_FILL_MODE RasterizerState::ConvertFillMode(const FillMode fillMode)
             return D3D11_FILL_SOLID;
     };
 }
-
 D3D11_CULL_MODE RasterizerState::ConvertCullMode(const CullMode cullMode)
 {
     switch (cullMode)
@@ -60,7 +54,6 @@ D3D11_CULL_MODE RasterizerState::ConvertCullMode(const CullMode cullMode)
             return D3D11_CULL_NONE;
     };
 }
-
 void RasterizerState::CreateResource()
 {
     D3D11_RASTERIZER_DESC desc = {};
@@ -74,10 +67,8 @@ void RasterizerState::CreateResource()
     desc.MultisampleEnable = enableMSAA;
     desc.AntialiasedLineEnable = enableLineAA;
     desc.ScissorEnable = scissorEnabled;
-
     ID3D11Device* d3dDevice = Editor::GetInstance().GetDirectXRenderer()->GetD3D11Device();
     HRESULT result = d3dDevice->CreateRasterizerState(&desc, &rasterizerState);
-
     if (FAILED(result))
     {
         Logger::GetInstance().Log(Logger::Level::Error, "Failed to create rasterizer state!");

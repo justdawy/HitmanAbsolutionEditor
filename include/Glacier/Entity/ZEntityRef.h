@@ -1,7 +1,5 @@
 #pragma once
-
 class ZEntityType;
-
 class ZEntityRef
 {
 private:

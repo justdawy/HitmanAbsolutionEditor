@@ -1,14 +1,11 @@
 #pragma once
-
 #include <string>
 #include <vector>
 #include <functional>
-
 #include "Glacier/Resource/SResourceHeaderHeader.h"
 #include "Glacier/Resource/ZRuntimeResourceID.h"
 #include "Glacier/Resource/EResourceReferenceFlags.h"
 #include "IO/BinaryReader.h"
-
 class Resource
 {
 public:
@@ -18,9 +15,7 @@ public:
         unsigned int chunkIndex;
         unsigned int indexInLibrary;
     };
-
     using ResourceLoadedCallback = std::function<void()>;
-
     Resource();
     virtual ~Resource();
     const std::string GetHeaderLibraryFilePath() const;
@@ -72,16 +67,13 @@ public:
     void SetResourceLoadedCallback(ResourceLoadedCallback resourceLoadedCallback);
     const bool IsResourceDeserialized() const;
     void ExportRawData(const std::string& outputFilePath);
-
     virtual void Deserialize()
     {
         isResourceDeserialized = false;
     }
-
     virtual void Export(const std::string& outputPath, const std::string& exportOption)
     {
     }
-
 protected:
     std::string headerLibraryFilePath;
     std::string resourceLibraryFilePath;

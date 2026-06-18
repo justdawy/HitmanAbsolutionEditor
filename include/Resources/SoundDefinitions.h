@@ -1,14 +1,10 @@
 #pragma once
-
 #include <string>
 #include <vector>
-
 #include "Glacier/Sound/SActorSoundDefs.h"
 #include "Glacier/Sound/SDoorSoundDefs.h"
 #include "Glacier/Sound/ESoundPlayParameters.h"
-
 #include "Resource.h"
-
 class SoundDefinitions : public Resource
 {
 public:
@@ -18,7 +14,6 @@ public:
         static std::string ConvertActorSoundDefinitionToString(const SActorSoundDefs::EDefinition definition);
         static std::string ConvertDoorSoundDefinitionToString(const SDoorSoundDefs::EDefinition definition);
         static std::string ConvertSoundPlayParametersToString(const ESoundPlayParameters soundPlayParameters);
-
         int definition;
         unsigned int referenceIndex;
         int attenuationOffset;
@@ -27,12 +22,10 @@ public:
         int noRepeatsCount;
         std::vector<unsigned char> subSoundRepeatCounts;
     };
-
     void Deserialize() override;
     void Export(const std::string& outputPath, const std::string& exportOption) override;
     void SerializeToJson(const std::string& outputFilePath);
     std::vector<Entry>& GetEntries();
-
 private:
     std::vector<Entry> entries;
 };

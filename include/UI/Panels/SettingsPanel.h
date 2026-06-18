@@ -1,7 +1,5 @@
 #pragma once
-
 #include "BasePanel.h"
-
 class SettingsPanel : public BasePanel
 {
 public:

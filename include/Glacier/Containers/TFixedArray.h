@@ -1,8 +1,6 @@
 #pragma once
-
 #include "TFixedArrayBase.h"
 #include "ZFixedArrayData.h"
-
 template <typename TElement, unsigned int TSize>
 class TFixedArray : public TFixedArrayBase<TElement, ZFixedArrayData<TElement, TSize>>
 {
@@ -11,27 +9,21 @@ public:
     {
         return TSize;
     }
-
     TElement& operator[](unsigned int nIndex)
     {
         return this->m_pStart[nIndex];
     }
-
     const TElement& operator[](unsigned int nIndex) const
     {
         return this->m_pStart[nIndex];
     }
-
     void SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer)
     {
         writer.StartArray();
-
         unsigned int size = Size();
-
         for (unsigned int i = 0; i < size; i++)
         {
             TElement element = this->operator[](i);
-
             if constexpr (std::is_class_v<TElement>)
             {
                 element.SerializeToJson(writer);
@@ -64,19 +56,15 @@ public:
                 }
             }
         }
-
         writer.EndArray();
     }
-
     void SerializeToMemory(ZBinarySerializer& binarySerializer, const unsigned int offset)
     {
         unsigned int elementsCount = Size();
-
         for (unsigned int i = 0; i < elementsCount; ++i)
         {
             unsigned int elementOffset = offset + sizeof(TElement) * i;
             TElement element = this->operator[](i);
-
             if constexpr (std::is_class_v<TElement>)
             {
                 element.SerializeToMemory(binarySerializer, elementOffset);
@@ -87,20 +75,17 @@ public:
             }
         }
     }
-
     static TFixedArray* DeserializeFromJson(const rapidjson::Value& array2)
     {
         unsigned int size = array2.Size();
         TFixedArray<TElement, TSize>* fixedArray = new TFixedArray<TElement, TSize>();
         int i = 0;
-
         for (rapidjson::Value::ConstValueIterator it = array2.Begin(); it != array2.End(); ++it)
         {
             if constexpr (std::is_class_v<TElement>)
             {
                 const rapidjson::Value& object2 = it->GetObj();
                 TElement element = TElement::DeserializeFromJson(object2);
-
                 fixedArray->operator[](i) = element;
             }
             else
@@ -134,13 +119,10 @@ public:
                     fixedArray->operator[](i) = it->GetBool();
                 }
             }
-
             i++;
         }
-
         return fixedArray;
     }
-
     bool operator==(const TFixedArray& other) const
     {
         for (unsigned int i = 0; i < Size(); ++i)
@@ -150,7 +132,6 @@ public:
                 return false;
             }
         }
-
         return true;
     }
 };

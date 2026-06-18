@@ -1,22 +1,17 @@
 #pragma once
-
 #include <atomic>
-
 #include "PipelineState.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Sampler.h"
 #include "ConstantBuffer.h"
 #include "RendererBindings.h"
-
 class Renderer3D;
-
 class CommandList
 {
 public:
     CommandList() = default;
     ~CommandList() = default;
-
     void SetPipelineState(PipelineState& pipelineState, Renderer3D* renderer3D, bool setRenderTargets = true);
     void ClearPipelineStateRenderTargets(PipelineState& pipelineState);
     void ClearRenderTarget(
@@ -49,20 +44,14 @@ public:
     void SetRasterizerState();
     void SetPrimitiveTopology();
     void SetRenderTargets();
-
 private:
     void UnbindOutputTextures();
-
     PipelineState pipelineState;
-
-    // Keep track of output textures so that we can unbind them and prevent
-    // D3D11 warnings when trying to bind them as SRVs in following passes
     struct OutputTexture
     {
         RenderTexture* texture = nullptr;
         unsigned int slot;
     };
-
     static const unsigned char resourceArrayLengthMax = 16;
     std::array<OutputTexture, resourceArrayLengthMax> outputTextures;
     unsigned int outputTexturesIndex = 0;

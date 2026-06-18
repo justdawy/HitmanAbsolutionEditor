@@ -1,5 +1,4 @@
 #pragma once
-
 struct SDoorSoundDefs
 {
 	enum EDefinition

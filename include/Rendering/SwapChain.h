@@ -1,17 +1,14 @@
 #pragma once
-
 #include <d3d11.h>
-
 class SwapChain
 {
 public:
     enum class PresentMode
     {
-        Immediate, // Doesn't wait.                  Frames are not dropped. Tearing.    Full on.
-        Mailbox,   // Waits for v-blank.             Frames are dropped.     No tearing. Minimizes latency.
-        Fifo,      // Waits for v-blank, every time. Frames are not dropped. No tearing. Minimizes stuttering.
+        Immediate,
+        Mailbox,
+        Fifo,
     };
-
     SwapChain() = default;
     SwapChain(const unsigned int width, const unsigned int height, const PresentMode presentMode, const unsigned int bufferCount);
     ~SwapChain();
@@ -27,7 +24,6 @@ public:
     static UINT GetPresentFlags(const PresentMode presentMode);
     static PresentMode GetSupportedPresentMode(const PresentMode presentMode);
     static bool IsTearingSupported();
-
 private:
     unsigned int width;
     unsigned int height;

@@ -1,9 +1,6 @@
 #pragma once
-
 #include <map>
-
 #include "imgui.h"
-
 #include "Rendering/Scene/Camera.h"
 #include "Rendering/RenderTexture.h"
 #include "Rendering/ConstantBuffer.h"
@@ -12,7 +9,6 @@
 #include "Rendering/Scene/Entity.h"
 #include "Rendering/CommandList.h"
 #include "Rendering/Scene/TransformGizmo.h"
-
 class Renderer3D
 {
 public:
@@ -46,7 +42,6 @@ public:
 		SimplePixel,
 		ShaderCount
 	};
-
 	enum RendererTextures
 	{
 		FrameOutput,
@@ -55,9 +50,7 @@ public:
 		Outline,
 		WhiteTexture
 	};
-
 	using SelectedEntityCallback = std::function<void(std::shared_ptr<Entity> selectedEntity)>;
-
 	Renderer3D() = default;
 	void Initialize();
 	std::shared_ptr<Camera> GetCamera();
@@ -85,14 +78,12 @@ public:
 	LightConstantBuffer& GetLightConstantBufferCpu();
 	static std::shared_ptr<Shader> GetShader(const Shaders shader);
 	void SetSelectedEntityCallback(SelectedEntityCallback selectedEntityCallback);
-
 private:
 	bool isRendererSetup;
 	std::shared_ptr<Camera> camera;
 	ID3D11ShaderResourceView* shaderResourceView;
 	std::shared_ptr<Entity> rootEntity;
 	TransformGizmo transformGizmo;
-
 	CameraConstantBuffer cameraConstantBufferCpu;
 	MeshConstantBuffer meshConstantBufferCpu;
 	LightConstantBuffer lightConstantBufferCpu;

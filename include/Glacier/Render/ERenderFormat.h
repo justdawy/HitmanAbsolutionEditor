@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ERenderFormat
 {
 	RENDER_FORMAT_NONE = 0,

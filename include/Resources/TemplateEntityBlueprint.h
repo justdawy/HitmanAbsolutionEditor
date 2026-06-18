@@ -1,9 +1,6 @@
 #pragma once
-
 #include <Glacier/Entity/STemplateEntityBlueprint.h>
-
 #include "Resource.h"
-
 class TemplateEntityBlueprint : public Resource
 {
 public:
@@ -15,7 +12,6 @@ public:
 	void ParseExposedInterfaces(void* templateEntityBlueprint, STemplateSubEntityBlueprint* entityTemplate, TArray<TPair<ZString, int>>& exposedInterfaces);
 	void ParseEntitySubsets(void* templateEntityBlueprint, STemplateSubEntityBlueprint* entityTemplate, TArray<TPair<ZString, SEntityTemplateEntitySubset>>& entitySubsets);
 	std::shared_ptr<STemplateEntityBlueprint> GetTemplateEntityBlueprint();
-
 private:
 	std::shared_ptr<STemplateEntityBlueprint> templateEntityBlueprint;
 };

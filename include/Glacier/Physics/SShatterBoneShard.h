@@ -1,13 +1,9 @@
 #pragma once
-
 #include <vector>
-
 #include "ZCollisionShape.h"
-
 struct SShatterBoneShard
 {
 	void SerializeToJson(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer);
-
 	ZCollisionShape m_pShape;
 	bool m_bNoCollision;
 	bool m_bRemain;

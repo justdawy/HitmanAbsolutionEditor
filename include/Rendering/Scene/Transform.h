@@ -1,11 +1,8 @@
 #pragma once
-
 #include <vector>
 #include <DirectXMath.h>
-
 #include "Component.h"
 #include "Math/Matrix.h"
-
 class Transform : public Component
 {
 public:
@@ -43,18 +40,15 @@ public:
 	void SetParent(std::weak_ptr<Transform> parent);
 	void AddChild(std::shared_ptr<Transform> child);
 	void RenderProperties() override;
-
 private:
 	Matrix localMatrix;
 	Vector3 localPosition;
 	Quaternion localRotation;
 	Vector3 localScale;
-
 	Matrix worldMatrix;
 	Vector3 worldPosition;
 	Quaternion worldRotation;
 	Vector3 worldScale;
-
 	std::weak_ptr<Transform> parent;
 	std::vector<std::shared_ptr<Transform>> children;
 	bool isDirty = false;

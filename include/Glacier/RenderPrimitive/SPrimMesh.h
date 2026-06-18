@@ -1,9 +1,7 @@
 #pragma once
-
 #include "SPrimObject.h"
 #include "Math/Vector2.h"
 #include "Math/Vector4.h"
-
 struct SPrimMesh : SPrimObject
 {
 	unsigned int lSubMeshTable;

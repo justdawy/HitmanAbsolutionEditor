@@ -1,5 +1,4 @@
 #pragma once
-
 enum class ECustomDataType
 {
 	eINT32 = 0,

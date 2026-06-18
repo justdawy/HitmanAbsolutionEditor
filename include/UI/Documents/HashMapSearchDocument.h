@@ -1,7 +1,5 @@
 #pragma once
-
 #include "Document.h"
-
 class HashMapSearchDocument : public Document
 {
 public:

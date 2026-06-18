@@ -1,14 +1,10 @@
 #pragma once
-
 #include <set>
-
 #include "Component.h"
 #include "Mesh.h"
 #include "Skeleton.h"
 #include "Collision.h"
-
 class Cloth;
-
 class Model : public Component
 {
 public:
@@ -22,7 +18,6 @@ public:
 	void Render() override;
 	void RenderProperties() override;
 	void UpdateLODVisibility();
-
 private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	bool wireframe;

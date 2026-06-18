@@ -1,7 +1,5 @@
 #pragma once
-
 #include "Document.h"
-
 class SceneDocument : public Document
 {
 public:
