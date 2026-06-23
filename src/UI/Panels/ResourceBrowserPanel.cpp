@@ -278,23 +278,27 @@ void ResourceBrowserPanel::Render()
                 BatchImportFsbsFiles(inputFolder);
             }
         }
-        if (showImportJsonPopup && resource && resource->IsResourceLoaded())
-        {
-            showImportJsonPopup = false;
-            std::string filePath;
-            std::string extension;
-            FileDialog::OpenSaveFileDialog("", ".json", "JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0", filePath, extension);
-            if (!filePath.empty())
-            {
-                std::shared_ptr<TextList> textList = std::static_pointer_cast<TextList>(resource);
-                textList->ImportFromJson(filePath);
-            }
-        }
         if (showPatchPopup && resource && resource->IsResourceLoaded())
         {
             showPatchPopup = false;
             std::shared_ptr<TextList> textList = std::static_pointer_cast<TextList>(resource);
-            textList->PatchResourceLibrary();
+            if (!textList->IsResourceDeserialized())
+            {
+                textList->Deserialize();
+            }
+            std::string filePath = FileDialog::OpenFile("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0");
+            if (!filePath.empty())
+            {
+                textList->ImportFromJson(filePath);
+                if (textList->PatchResourceLibrary())
+                {
+                    Logger::GetInstance().Log(Logger::Level::Info, std::format("Patched resource {}", resource->GetName()));
+                }
+                else
+                {
+                    Logger::GetInstance().Log(Logger::Level::Error, std::format("Failed to patch resource {}", resource->GetName()));
+                }
+            }
         }
         if (showFsbsPatchPopup && resource && resource->IsResourceLoaded())
         {
@@ -389,8 +393,7 @@ void ResourceBrowserPanel::RenderTree(ResourceNode& parentNode, std::string pare
 void ResourceBrowserPanel::RenderContextMenu(ResourceNode& resourceNode)
 {
     static std::string exportResourceLabel = std::format("{} Export Resource", ICON_MDI_EXPORT);
-    static std::string importJsonLabel = std::format("{} Import JSON (Replace Localization)", ICON_MDI_IMPORT);
-    static std::string patchResourceLabel = std::format("{} Patch Resource Library (Write Back)", ICON_MDI_CONTENT_SAVE);
+    static std::string patchResourceLabel = std::format("{} Patch Resource Library (Import JSON & Write Back)", ICON_MDI_CONTENT_SAVE);
     const ResourceInfoRegistry::ResourceInfo& resourceInfo = ResourceInfoRegistry::GetInstance().GetResourceInfo(resourceNode.hash);
     if (ImGui::MenuItem(exportResourceLabel.c_str()))
     {
@@ -406,19 +409,6 @@ void ResourceBrowserPanel::RenderContextMenu(ResourceNode& resourceNode)
     }
     if (resourceInfo.type == "TELI")
     {
-        if (ImGui::MenuItem(importJsonLabel.c_str()))
-        {
-            showImportJsonPopup = true;
-            resource = ResourceUtility::CreateResource(resourceInfo.type);
-            std::string resourceName = ResourceUtility::GetResourceName(resourceInfo.resourceID);
-            resource->SetHash(resourceInfo.hash);
-            resource->SetResourceID(resourceInfo.resourceID);
-            resource->SetHeaderLibraries(&resourceInfo.headerLibraries);
-            resource->SetName(resourceName);
-            pendingResourceNode = resourceNode;
-            std::thread thread(&ResourceBrowserPanel::LoadResource, this, resource, resourceNode, true);
-            thread.detach();
-        }
         if (ImGui::MenuItem(patchResourceLabel.c_str()))
         {
             showPatchPopup = true;
